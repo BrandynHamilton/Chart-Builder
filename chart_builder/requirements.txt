@@ -1,0 +1,14 @@
+pandas
+numpy
+plotly
+kaleido
+jupyter
+ipykernel
+pip-audit
+bandit
+svgwrite
+pyairtable
+python-dotenv
+google-analytics-data
+google-auth-oauthlib
+google-api-python-client
