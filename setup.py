@@ -8,7 +8,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Brandyn Hamilton",
     author_email="brandynham1120@gmail.com",
-    url="https://github.com/yourusername/chart_builder",  # Link to your GitHub repo or documentation
+    url="https://github.com/BrandynHamilton/Chart-Builder",  # Link to your GitHub repo or documentation
     packages=find_packages(include=["chart_builder", "chart_builder.*"]),  # Include only chart_builder and its submodules
     install_requires=[
         "pandas",
