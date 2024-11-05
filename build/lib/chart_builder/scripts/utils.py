@@ -7,10 +7,7 @@ import os
 
 def clean_values(x, decimals=True, decimal_places=1):
     if isinstance(x, pd.Series):
-        return x.apply(clean_values, decimals=decimals, decimal_places=decimal_places)
-    
-    if x == 0:
-        return '0'
+        return x.apply(clean_values)
 
     if decimals == True:
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
@@ -33,10 +30,10 @@ def clean_values(x, decimals=True, decimal_places=1):
             return f'{x:.{decimal_places}f}'  # Show as is for hundreds
         elif x >= 1 or x <= -1:
             print(f'x:{x}')
-            return f'{x:.{decimal_places}f}'  # Show whole numbers for numbers between 1 and 100
+            return f'{x:.2f}'  # Show whole numbers for numbers between 1 and 100
         else:
             print(f'x:{x}')
-            return f'{x:.{decimal_places}f}'  # Handle smaller numbers
+            return f'{x:.2f}'  # Handle smaller numbers
     
     else:
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
@@ -804,7 +801,7 @@ def get_files(submission):
 def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x=0.05,y=1.18),
          save=True,file_type='svg',clean_columns=False, capwords=None, keep_top_n = False, other=False, topn=None,
          show=True,show_index_and_cols=True,clean_values=False,clean_words=None,dt_index=True,add_the_date=True,groupby=False,groupbyHow='sum',
-         date=None,dashed_line=False,annotation_text=None):
+         date=None):
     
     print(f'save:{save}')
     
@@ -832,9 +829,6 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
 
     if add_the_date == True:
         fig.add_date(date=date,x=date_xy['x'],y=date_xy['y'],dt_index=dt_index)
-
-    if dashed_line:
-        fig.add_dashed_line(date=date,annotation_text=annotation_text)
 
     if show == True:
         fig.show_fig()
