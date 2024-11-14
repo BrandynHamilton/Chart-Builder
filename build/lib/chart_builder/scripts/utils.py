@@ -7,7 +7,10 @@ import os
 
 def clean_values(x, decimals=True, decimal_places=1):
     if isinstance(x, pd.Series):
-        return x.apply(clean_values)
+        return x.apply(clean_values, decimals=decimals, decimal_places=decimal_places)
+    
+    if x == 0:
+        return '0'
 
     if decimals == True:
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
@@ -30,10 +33,10 @@ def clean_values(x, decimals=True, decimal_places=1):
             return f'{x:.{decimal_places}f}'  # Show as is for hundreds
         elif x >= 1 or x <= -1:
             print(f'x:{x}')
-            return f'{x:.2f}'  # Show whole numbers for numbers between 1 and 100
+            return f'{x:.{decimal_places}f}'  # Show whole numbers for numbers between 1 and 100
         else:
             print(f'x:{x}')
-            return f'{x:.2f}'  # Handle smaller numbers
+            return f'{x:.{decimal_places}f}'  # Handle smaller numbers
     
     else:
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
@@ -53,6 +56,9 @@ def clean_values(x, decimals=True, decimal_places=1):
         else:
             return f'{x:.0f}'  # Handle smaller numbers
 
+def create_df(columns, data):
+    df = pd.DataFrame(data, columns=columns)
+    return df
 
 def clean_values_dollars(x):
     if isinstance(x, pd.Series):
@@ -322,45 +328,57 @@ def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to
     return df
 
 
-def rank_by_col(df, sort_col, num_col, descending=True):
+def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False):
     print(f'df @ rank_by_col: {df}')
     # Ensure the DataFrame's index is sorted by date
     print(f'before sort, index order: {df.index}')
     df.sort_index(inplace=True)
     print(f'after sort, index order: {df.index}')
 
-    # Get the full list of unique signer names
-    all_signers = df[sort_col].unique()
+    if cumulative_sort:
+        # Calculate cumulative sum and sort by `num_col`
+        sorted_list = (
+            df.groupby(sort_col)[num_col]
+            .sum()
+            .sort_values(ascending=not descending)
+            .index
+            .tolist()
+        )
+    else:
+        # Get all unique values of `sort_col`
+        all_signers = df[sort_col].unique()
 
-    # Find the last day in the dataset
-    last_day = df.index.max()
+        # Identify the last day in the dataset
+        last_day = df.index.max()
 
-    # Get the last record for each signer_name
-    last_records = df.groupby(sort_col).tail(1)
+        # Get the last record for each unique value in `sort_col`
+        last_records = df.groupby(sort_col).tail(1)
 
-    # Check if there is a transaction on the last day for each signer
-    last_day_records = last_records[last_records.index == last_day]
+        # Filter for records on the last day
+        last_day_records = last_records[last_records.index == last_day]
 
-    # Identify missing signer names that need to be added with 0 transactions
-    missing_signers = set(all_signers) - set(last_day_records[sort_col])
+        # Identify missing values in `sort_col` that need 0 transactions
+        missing_signers = set(all_signers) - set(last_day_records[sort_col])
 
-    # Create a DataFrame for missing signer names with 0 transactions
-    missing_df = pd.DataFrame({
-        sort_col: list(missing_signers),
-        num_col: 0
-    })
+        # Create a DataFrame for missing signers with 0 transactions
+        missing_df = pd.DataFrame({
+            sort_col: list(missing_signers),
+            num_col: 0
+        })
 
-    # Append missing_df to last_day_records
-    combined_df = pd.concat([last_day_records, missing_df])
+        # Append missing records to last day records
+        combined_df = pd.concat([last_day_records, missing_df])
 
-    # Sort by the transaction number column based on the descending parameter
-    combined_df = combined_df.sort_values(by=num_col, ascending=not descending)  # Use `not descending` for the sort order
-    combined_df.drop_duplicates(inplace=True)
+        # Sort by `num_col` based on the descending parameter
+        combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
 
-    print(f'ending index order: {combined_df.reset_index()[sort_col].values.tolist()}')
+        print(f'ending index order: {combined_df.reset_index()[sort_col].values.tolist()}')
 
-    # Reset index to return the 'signer_name' column as a Series
-    return combined_df.reset_index()[sort_col].values.tolist()
+        # Convert to a list of `sort_col` values
+        sorted_list = combined_df.reset_index()[sort_col].values.tolist()
+
+    return sorted_list
+
 
 
 def rank_by_columns(df, cumulative=False, descending=True):
@@ -801,21 +819,21 @@ def get_files(submission):
 def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x=0.05,y=1.18),
          save=True,file_type='svg',clean_columns=False, capwords=None, keep_top_n = False, other=False, topn=None,
          show=True,show_index_and_cols=True,clean_values=False,clean_words=None,dt_index=True,add_the_date=True,groupby=False,groupbyHow='sum',
-         date=None):
+         date=None,dashed_line=False,annotation_text=None,axis='y1'):
     
     print(f'save:{save}')
     
     if clean_values == True:
         fig.clean_values()
 
-    if groupby:
-        fig.group_data(how=groupbyHow)
-
     if keep_top_n == True:
         if other == False:
             fig.keep_top_n(topn=topn, other=False)
         else:
             fig.keep_top_n(topn=topn, other=True)
+
+    if groupby:
+        fig.group_data(how=groupbyHow)
 
     if clean_columns == True:
         fig.clean_columns(capwords=capwords,clean_words=clean_words)
@@ -829,6 +847,9 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
 
     if add_the_date == True:
         fig.add_date(date=date,x=date_xy['x'],y=date_xy['y'],dt_index=dt_index)
+
+    if dashed_line:
+        fig.add_dashed_line(date=date,annotation_text=annotation_text)
 
     if show == True:
         fig.show_fig()

@@ -37,18 +37,19 @@ class visualization_pipeline():
     def __init__(self,chart_type, title, file=None, df=None,cols_to_plot=None, is_file_path=False, watermark=None,dimensions=dict(height=400,width=730), 
                  subtitle=None, colors=combined_colors, axes_data=dict(y1=[],y2=[]), axes_titles=dict(y1=None,y2=None),
                   mode='lines',area=False, fill=None,tickprefix=dict(y1=None,y2=None), ticksuffix=dict(y1=None,y2=None),
-                  annotation_prefix=None,annotation_suffix=None, legend_orientation='v',show_legend=True, annotations=False, 
+                  annotation_prefix=None,annotation_suffix=None, legend_orientation='v',show_legend=False, annotations=False, 
                   max_annotation=False,bgcolor='rgba(0,0,0,0)', tickangle=None, legend_placement=dict(x=0.025,y=1),
-                  margin=dict(l=0, r=0, t=25, b=25), sort_list = True,tick0='min', remove_zero=False, custom_ticks=False,
+                  margin=dict(l=0, r=0, t=25, b=0), sort_list = True,tick0='min', remove_zero=False, custom_ticks=False,
                   line_width=4, marker_size=10,cumulative_sort=False,decimal_places=1,decimals=True,groupby=None,
                 itemsizing='constant',num_col=None,barmode='stack',tickformat=dict(x='%b %d <br>%y',y1=".2s",y2=".2s"),
                 textposition="outside",orientation="v",dtick=None,traceorder='normal',line_color=None,bar_line=None,hole_size=.6,
                 time_frame='All', resample_freq=None,legend_font_size=14,font_size=16,annotation_font_size=25,turn_to_time=True,time_col=None,
                 fillna=False,keepna=False,dropna_col=False, topn=4, capwords=None,logo=None,bar_col=None, line_col=None,
-                y2_col=None,y2=False,text=False,text_font_size=12,text_freq=1,dropna=False,index_col=None, to_reverse=False,
-                to_percent=False,normalize=False,start_date=None, end_date=None,connectgaps=True,drop_duplicates=True,auto_title=True,descending=True,
+                y2_col=None,y2=False,text=False,text_font_size=14,text_freq=1,dropna=False,index_col=None, to_reverse=False,
+                to_percent=False,normalize=False,start_date=None, end_date=None,connectgaps=True,drop_duplicates=True,auto_title=False,descending=True,
                 set_time_col=False,drop_mid_timefreq=True,agg_func='sum',clean_dates=True,ffill=False,font_family='IBM Plex Mono',font_color='black',
-                directory='../img',custom_annotation=None):
+                directory='../img',custom_annotation=None,buffer=None,textinfo='none',ytick_num=6,
+                axes_font_colors=dict(y1='black',y2='black'),file_type='svg',texttemplate='%{label}<br>%{percent}',use_single_color=False):
         
         custom_template = pio.templates["plotly"]
         custom_template.layout.font.family = font_family
@@ -147,6 +148,12 @@ class visualization_pipeline():
 
         df = df[cols_to_plot]
         self.df = df.copy()
+        self.use_single_color=use_single_color
+        self.cumulative_sort = cumulative_sort
+        self.texttemplate = texttemplate
+        self.file_type = file_type
+        self.axes_font_colors = axes_font_colors
+        self.ytick_num = ytick_num
         self.directory = directory
         self.custom_annotation = custom_annotation
         self.font_color = font_color
@@ -179,9 +186,11 @@ class visualization_pipeline():
         self.colors = colors
         self.fill = fill
         self.topn = topn
+        self.textinfo = textinfo
         self.chart_type = chart_type
         self.bgcolor = bgcolor
         self.fig = None
+        self.datetime_tick = turn_to_time
         self.tick0 = tick0
         self.title_position = None
         self.watermark = watermark_path
@@ -191,6 +200,7 @@ class visualization_pipeline():
         self.axes_data = axes_data
         self.bar_col = bar_col
         self.line_col = line_col
+        self.line_color = line_color
         self.axes_titles = axes_titles
         self.y2 = y2
         self.text = text
@@ -212,6 +222,7 @@ class visualization_pipeline():
         self.annotation_prefix = annotation_prefix
         self.annotation_suffix = annotation_suffix
         self.sort_list = sort_list
+        self.buffer = buffer
 
     def create_fig(self):
         print(f'logo path: {self.logo}')
@@ -299,11 +310,12 @@ class visualization_pipeline():
 
     def line_plot(self):
         print("Generating line plot...")
+        print(f'axes titles at viz pipeline: {self.axes_titles}')
         if self.groupby == None:
             print(f'No GroupBy Col')
             print(f'cols to plot: {self.cols_to_plot}')
             print(f'axes data to plot: {self.axes_data}')
-
+            
             y1_columns = self.axes_data['y1']
             y2_columns = self.axes_data['y2']
 
@@ -319,7 +331,8 @@ class visualization_pipeline():
                                 fill=self.fill,connectgaps=self.connectgaps,max_annotation=self.max_annotation,descending=self.descending,traceorder=self.traceorder,
                                 tickangle=self.tickangle,text=self.text,text_freq=self.text_freq,decimals=self.decimals,decimal_places=self.decimal_places,tick0=self.tick0,
                                 remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors,
-                                custom_annotation=self.custom_annotation)
+                                custom_annotation=self.custom_annotation,ytick_num=self.ytick_num,axes_font_colors=self.axes_font_colors,
+                                auto_title=self.auto_title,file_type = self.file_type,buffer=self.buffer)
             self.fig = fig
             return fig
         else:
@@ -335,7 +348,7 @@ class visualization_pipeline():
                                     ticksuffix=self.ticksuffix['y1'],tickformat=self.tickformat,bgcolor=self.bgcolor,legend_font_size=self.legend_font_size,dimensions=self.dimensions,
                                     connectgaps=self.connectgaps,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle, show_legend=self.show_legend,tick0=self.tick0
                                     ,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors
-                                    ,custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals)
+                                    ,custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,file_type = self.file_type)
             self.fig = fig
             return fig
 
@@ -343,6 +356,7 @@ class visualization_pipeline():
         print("Generating bar plot...")
         if self.groupby == None:
             print(f'No GroupBy Col')
+            print(f'auto_title: {self.auto_title}')
    
             fig = simple_bar_plot(df=self.df, title=self.title, annotations=self.annotations, show_legend=self.show_legend,
                                 legend_orientation=self.legend_orientation,
@@ -353,7 +367,8 @@ class visualization_pipeline():
                                 axes_data=self.axes_data,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle,text_position=self.textposition,
                                 decimals=self.decimals,colors=self.colors,tick0=self.tick0,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,
                                 font_color=self.font_color,directory=self.directory,
-                                custom_annotation=self.custom_annotation)
+                                custom_annotation=self.custom_annotation,buffer=self.buffer,decimal_places=self.decimal_places,ytick_num=self.ytick_num,
+                                auto_title=self.auto_title,datetime_tick=self.datetime_tick,file_type = self.file_type)
             self.fig = fig
             return fig
         else:
@@ -373,7 +388,8 @@ class visualization_pipeline():
                                     ticksuffix=self.ticksuffix['y1'],tickformat=self.tickformat,bgcolor=self.bgcolor,legend_font_size=self.legend_font_size,
                                     dimensions=self.dimensions,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle,colors=self.colors,
                                      show_legend=self.show_legend,tick0=self.tick0,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,
-                                custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals)
+                                custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,buffer=self.buffer,ytick_num=self.ytick_num,
+                                  file_type = self.file_type,cumulative_sort=self.cumulative_sort)
             self.fig = fig
             return fig
     
@@ -386,12 +402,14 @@ class visualization_pipeline():
                            axes_title=self.axes_titles, tickprefix=self.tick_prefix,ticksuffix=self.ticksuffix,dimensions=self.dimensions,
                            margin=self.margin,auto_title=self.auto_title,tickformat=self.tickformat,barmode=self.barmode,tickangle=self.tickangle, fill=self.fill,
                            area=self.area,colors = self.colors,tick0=self.tick0,dtick=self.dtick,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,
-                           custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals)
+                           custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,buffer=self.buffer,ytick_num=self.ytick_num,file_type = self.file_type,show_legend=self.show_legend,axes_font_colors=self.axes_font_colors,
+                           legend_placement=self.legend_placement,line_color=self.line_color)
         self.fig = fig
         return fig
     
     def pie_plot(self):
         print('Generating pie chart...')
+        print(f'self.textinfo: {self.textinfo}')
         # def pie_chart(df, sum_col, index_col, title, save=False,colors=combined_colors,bgcolor='rgba(0,0,0,0)',annotation_prefix="$", annotation_font_size=25,
         #       decimals=True,legend_font_size=16,font_size=18, legend_placement=dict(x=0.01,y=1.1),margin=dict(l=0, r=0, t=0, b=0),hole_size=.6,line_width=0,
         #       legend_orientation='v',decimal_places=1,itemsizing='constant',dimensions=dict(width=730,height=400)):
@@ -400,7 +418,8 @@ class visualization_pipeline():
                         dimensions=self.dimensions,annotation_font_size=self.annotation_font_size,annotation_prefix=self.annotation_prefix,
                         annotation_suffix = self.annotation_suffix,
                         decimals=self.decimals,decimal_places=self.decimal_places,margin=self.margin,hole_size=self.hole_size,
-                        line_width=self.line_width,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors)
+                        line_width=self.line_width,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors,show_legend=self.show_legend,text_font_size=self.text_font_size,
+                        textinfo=self.textinfo,file_type = self.file_type,texttemplate=self.texttemplate)
         self.fig = fig
         return fig
 
@@ -414,7 +433,7 @@ class visualization_pipeline():
                      legend_placement=self.legend_placement, minsize=self.text_font_size, legend_font_size=self.legend_font_size,margin=self.margin,showlegend=self.show_legend,
                      decimals=self.decimals,traceorder=self.traceorder,decimal_places=self.decimal_places, to_reverse=self.to_reverse,
                      tickformat=self.tickformat['y1'],dimensions=self.dimensions,descending=self.descending,use_sort_list=self.sort_list,show_text=self.text,font_family=self.font_family,font_color=self.font_color
-                    ,directory=self.directory)
+                    ,directory=self.directory,colors=self.colors,file_type = self.file_type,use_single_color=self.use_single_color)
         self.fig = fig
         return fig
 
@@ -438,6 +457,7 @@ class visualization_pipeline():
         if self.turn_to_time == False:
             if how == 'sum':
                 self.df =  self.df.groupby(self.groupby)[self.num_col].sum().reset_index().sort_values(by=self.num_col,ascending=True)
+                print(f'{self.df}')
             elif how == 'mean':
                 self.df = self.df.groupby(self.groupby)[self.num_col].mean().reset_index().sort_values(by=self.num_col,ascending=True)
             elif how == 'median':
@@ -517,6 +537,53 @@ class visualization_pipeline():
                 layer="above"  # Place above other chart elements
             )
         )
+
+    def add_dashed_line(self, date, annotation_text):
+        if self.num_col:
+            number_col = self.num_col
+        else:
+            # Find the column with the maximum value for each row in the specified columns
+            self.df['max_value'] = self.df[self.cols_to_plot].max(axis=1)
+            self.df['max_column'] = self.df[self.cols_to_plot].idxmax(axis=1)
+
+            # Overall maximum value across all specified columns
+            max_value_overall = self.df['max_value'].max()
+            max_column_overall = self.df[self.cols_to_plot].max().idxmax()  # Column with the overall max value
+            number_col=max_column_overall
+
+        print(f'number_col: {number_col}')
+        print(f'date: {date}')
+        print(f'self.df.index: {self.df.index}')
+
+        print(f'self.df.loc[date, number_col]: {self.df.loc[date, number_col]}')
+            
+        yvalue= self.df.loc[date, number_col].max()
+        print(f'self.cols_to_plot: {self.cols_to_plot}')
+        self.fig.add_shape(
+            type="line",
+             x0=date,
+             y0=0,  # Start from the bottom of the plot
+             x1=date,
+             y1=yvalue,  # Extend to the y-value at the date
+             line_dash="dot",
+             line=dict(color="black", width=3),
+
+        )
+        self.fig.add_annotation(
+            x=date,
+            y=yvalue,
+            text=annotation_text+f'<br>{date}',
+            showarrow=False,
+            arrowhead=2,
+            ax=-10,
+            ay=-50,
+            arrowsize=1.5,
+            arrowwidth=1.5,
+            font=dict(size=self.text_font_size, family=self.font_family, color="black"),
+            arrowcolor='black'  # Customize arrow color if needed
+        )
+
+
 
     def add_logo(self):
         # Set the logo as a layout image
