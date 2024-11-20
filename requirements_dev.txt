@@ -12,3 +12,4 @@ python-dotenv
 google-analytics-data
 google-auth-oauthlib
 google-api-python-client
+colorcet

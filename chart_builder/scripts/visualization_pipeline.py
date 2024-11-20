@@ -34,21 +34,21 @@ from io import BytesIO
 combined_colors = colors()
 
 class visualization_pipeline():
-    def __init__(self,chart_type, title, file=None, df=None,cols_to_plot=None, is_file_path=False, watermark=None,dimensions=dict(height=400,width=730), 
+    def __init__(self,chart_type, title, file=None, df=None,cols_to_plot='All', is_file_path=False, watermark=None,dimensions=dict(height=400,width=730), 
                  subtitle=None, colors=combined_colors, axes_data=dict(y1=[],y2=[]), axes_titles=dict(y1=None,y2=None),
                   mode='lines',area=False, fill=None,tickprefix=dict(y1=None,y2=None), ticksuffix=dict(y1=None,y2=None),
                   annotation_prefix=None,annotation_suffix=None, legend_orientation='v',show_legend=False, annotations=False, 
                   max_annotation=False,bgcolor='rgba(0,0,0,0)', tickangle=None, legend_placement=dict(x=0.025,y=1),
                   margin=dict(l=0, r=0, t=25, b=0), sort_list = True,tick0='min', remove_zero=False, custom_ticks=False,
-                  line_width=4, marker_size=10,cumulative_sort=False,decimal_places=1,decimals=True,groupby=None,
-                itemsizing='constant',num_col=None,barmode='stack',tickformat=dict(x='%b %d <br>%y',y1=".2s",y2=".2s"),
+                  line_width=4, marker_size=10,cumulative_sort=False,decimal_places=1,decimals=True,groupby=None, 
+                itemsizing='constant',num_col=None,barmode='stack',tickformat=dict(x='%b %d <br>%y',y1=None,y2=None),
                 textposition="outside",orientation="v",dtick=None,traceorder='normal',line_color=None,bar_line=None,hole_size=.6,
                 time_frame='All', resample_freq=None,legend_font_size=14,font_size=16,annotation_font_size=25,turn_to_time=True,time_col=None,
                 fillna=False,keepna=False,dropna_col=False, topn=4, capwords=None,logo=None,bar_col=None, line_col=None,
                 y2_col=None,y2=False,text=False,text_font_size=14,text_freq=1,dropna=False,index_col=None, to_reverse=False,
                 to_percent=False,normalize=False,start_date=None, end_date=None,connectgaps=True,drop_duplicates=True,auto_title=False,descending=True,
-                set_time_col=False,drop_mid_timefreq=True,agg_func='sum',clean_dates=True,ffill=False,font_family='IBM Plex Mono',font_color='black',
-                directory='../img',custom_annotation=None,buffer=None,textinfo='none',ytick_num=6,
+                set_time_col=False,drop_mid_timefreq=True,agg_func='sum',clean_dates=True,ffill=False,font_family='Cardo',font_color='black',
+                directory='../img',custom_annotation=None,buffer=None,textinfo='percent+label',ytick_num=6,
                 axes_font_colors=dict(y1='black',y2='black'),file_type='svg',texttemplate='%{label}<br>%{percent}',use_single_color=False):
         
         custom_template = pio.templates["plotly"]
@@ -120,6 +120,9 @@ class visualization_pipeline():
         else:
             tick0==None
 
+        print(f'tick0: {tick0}')
+        print(f'turn_to_time: {turn_to_time}')
+
         if groupby is not None:
             print(f'df sort order at init: {df[groupby].unique()}')
         
@@ -152,6 +155,7 @@ class visualization_pipeline():
         self.cumulative_sort = cumulative_sort
         self.texttemplate = texttemplate
         self.file_type = file_type
+        self.marker_size = marker_size
         self.axes_font_colors = axes_font_colors
         self.ytick_num = ytick_num
         self.directory = directory
@@ -287,25 +291,29 @@ class visualization_pipeline():
             self.topn = topn
         if self.turn_to_time == False:
             if other == False:
-                if self.groupby!=None:
-                    self.df = top_by_col(df=self.df,sort_col=self.groupby,sum_col=self.num_col,num=self.topn)
+                if self.groupby != None:
+                    self.df = top_by_col(df=self.df, sort_col=self.groupby, sum_col=self.num_col, num=self.topn)
             else:
                 if self.groupby != None:
-                    self.df = top_other_by_col(df=self.df,sort_col=self.groupby,sum_col=self.num_col,num=self.topn)
-                    self.axes_data['y1'] = self.axes_data['y1'].append(pd.Index(['Other']))
+                    self.df = top_other_by_col(df=self.df, sort_col=self.groupby, sum_col=self.num_col, num=self.topn)
+                    # Append only if y1 is a list
+                    if isinstance(self.axes_data['y1'], list):
+                        self.axes_data['y1'].append('Other')
         else:
             if other == True:
-                if self.groupby==None:
-                    self.df = top_other_ts_by_columns(df=self.df,topn=self.topn)
+                if self.groupby == None:
+                    self.df = top_other_ts_by_columns(df=self.df, topn=self.topn)
                 else:
-                    self.df = top_other_ts_by_col(df=self.df,num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
-                
-                self.axes_data['y1'] = self.axes_data['y1'].append(pd.Index(['Other']))
+                    self.df = top_other_ts_by_col(df=self.df, num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
+
+                # Append only if y1 is a list
+                if isinstance(self.axes_data['y1'], list):
+                    self.axes_data['y1'].append('Other')
             else:
-                if self.groupby==None:
-                    self.df = top_ts_only_by_columns(df=self.df,topn=self.topn)
+                if self.groupby == None:
+                    self.df = top_ts_only_by_columns(df=self.df, topn=self.topn)
                 else:
-                    self.df = top_ts_by_col(df=self.df,num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
+                    self.df = top_ts_by_col(df=self.df, num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
         print(f'df after: {self.df}')
 
     def line_plot(self):
@@ -332,15 +340,11 @@ class visualization_pipeline():
                                 tickangle=self.tickangle,text=self.text,text_freq=self.text_freq,decimals=self.decimals,decimal_places=self.decimal_places,tick0=self.tick0,
                                 remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors,
                                 custom_annotation=self.custom_annotation,ytick_num=self.ytick_num,axes_font_colors=self.axes_font_colors,
-                                auto_title=self.auto_title,file_type = self.file_type,buffer=self.buffer)
+                                auto_title=self.auto_title,file_type = self.file_type,buffer=self.buffer,cumulative_sort=self.cumulative_sort,marker_size=self.marker_size,line_width=self.line_width)
             self.fig = fig
             return fig
         else:
-            # sorted_multi_line(df, title, save=False, combined_colors=combined_colors, mode='lines', col=None, sort_col=None, sort_list=True, area=False,
-            #          tickprefix=None, ticksuffix=None, font_size=18,
-            #          bgcolor='rgba(0,0,0,0)', legend_orientation='h', tickangle=None,
-            #          traceorder='normal', legend_placement=dict(x=0.01,y=1.1), margin=dict(l=0, r=0, t=0, b=0), legend_font_size=16,
-            #          tickformat=None, dtick=None, decimals=True,decimal_places=1,dimensions=dict(width=730,height=400),connectgaps=True):
+
             print(f'GroupBy Col: {self.groupby}')
             fig = sorted_multi_line(df=self.df, title=self.title,col=self.num_col, sort_col=self.groupby,area=self.area,legend_orientation=self.legend_orientation,
                                     legend_placement=self.legend_placement,margin=self.margin,
@@ -348,7 +352,8 @@ class visualization_pipeline():
                                     ticksuffix=self.ticksuffix['y1'],tickformat=self.tickformat,bgcolor=self.bgcolor,legend_font_size=self.legend_font_size,dimensions=self.dimensions,
                                     connectgaps=self.connectgaps,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle, show_legend=self.show_legend,tick0=self.tick0
                                     ,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors
-                                    ,custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,file_type = self.file_type)
+                                    ,custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,file_type = self.file_type,cumulative_sort=self.cumulative_sort,
+                                    marker_size=self.marker_size,line_width=self.line_width)
             self.fig = fig
             return fig
 
@@ -615,7 +620,7 @@ class visualization_pipeline():
             y1=y_value,  # End point y (same as y0 to create a horizontal line)
             line=dict(
                 color="#CEC9C8",  # Line color
-                width=2,      # Line width
+                width=3,      # Line width
                 dash="solid"   # Line style (e.g., 'solid', 'dash', 'dot')
             ),
             xref="paper",  # Reference to paper coordinates

@@ -4,3 +4,4 @@ plotly
 kaleido
 svgwrite
 python-dotenv
+colorcet

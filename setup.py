@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="chart_builder",  # The name users will use to pip install
-    version="0.1.4",
+    version="0.1.5",
     description="A library for building customizable charts in Python",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -17,6 +17,7 @@ setup(
         "kaleido",
         "svgwrite",                # Only keep necessary dependencies
         "python-dotenv",
+        "colorcet"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

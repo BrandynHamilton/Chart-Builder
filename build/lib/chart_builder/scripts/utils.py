@@ -4,6 +4,9 @@ import plotly.colors as pc
 import random
 from IPython.display import Image, display
 import os
+import matplotlib.cm as cm
+from matplotlib.colors import to_hex
+import colorcet as cc
 
 def clean_values(x, decimals=True, decimal_places=1):
     if isinstance(x, pd.Series):
@@ -102,10 +105,12 @@ def to_df(file, delimiter=','):
         print(f"Error loading {df_path}: {e}")
 
     
-def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True,drop_mid_timefreq=True):
+def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True, drop_mid_timefreq=True):
+    import pandas as pd
+
     time_cols = ['date', 'dt', 'hour', 'time', 'day', 'month', 'year', 
                  'week', 'timestamp', 'date(utc)', 'block_timestamp', 
-                 'ds', 'period', 'date_time', 'trunc_date','quarter','block_time',
+                 'ds', 'period', 'date_time', 'trunc_date', 'quarter', 'block_time',
                  'block_date']
     
     # Append the custom time column if provided
@@ -121,7 +126,6 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True,drop_mid
         print(f'col: {col}')
 
         if drop_mid_timefreq:
-
             # Check for specific time columns to set time_freq
             if col.lower() in ['week', 'month', 'quarter']:
                 print(f'time_freq: {col}')
@@ -129,8 +133,13 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True,drop_mid
                 time_col_found = True  # Indicate we found a time column
 
         if col.lower() in time_cols and col.lower() != 'timestamp':
-            if convert_to_datetime:
-                print(f'convert col to dt:{col}')
+            if col.lower() == 'year':  # Handle 'year' column explicitly
+                print(f"Converting 'year' column to datetime")
+                df[col] = pd.to_datetime(df[col].astype(str), format='%Y')  # Convert to datetime
+                df[col] = df[col].dt.year  # Keep only the year as integer
+                df = df.set_index(col)  # Set the 'year' column as the index
+            elif convert_to_datetime:
+                print(f'convert col to dt: {col}')
                 if dayfirst:
                     df[col] = pd.to_datetime(df[col], dayfirst=True).dt.tz_localize(None)  # Remove timezone
                 else:
@@ -148,7 +157,7 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True,drop_mid
         print('No specific time column found. Defaulting to daily frequency.')
 
     print(df.index)
-    print(f'time_freq:{time_freq}')
+    print(f'time_freq: {time_freq}')
     return df, time_freq
             
 def clean_dates(df, time_freq):
@@ -204,12 +213,21 @@ def latest_values(series):
     return formatted_val, formatted_date
 
 def colors(shuffle=False):
-    
+    # Existing Plotly palettes
     color_palette = pc.qualitative.Plotly[::-1]
     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
-    lib_colors = distinct_palette+color_palette
+    
+    # Add Matplotlib colors
+    matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
+                        [to_hex(cm.Set1(i)) for i in range(9)]
+    
+    # Add Colorcet colors
+    colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
 
-    if shuffle==True:
+    # Combine all palettes
+    lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
+
+    if shuffle:
         random.shuffle(lib_colors)
 
     print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
@@ -379,20 +397,54 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False):
 
     return sorted_list
 
+# def rank_by_columns(df, cumulative=False, descending=True):
+#     """
+#     Rank columns in a DataFrame based on the last row or cumulative sum of values.
+    
+#     Parameters:
+#     - df (pd.DataFrame): Input DataFrame
+#     - cumulative (bool): If True, ranks by the cumulative sum of each column.
+#     - descending (bool): Sort order; True for descending, False for ascending.
 
+#     Returns:
+#     - list: Ordered list of column names based on ranking.
+#     """
+#     if cumulative:
+#         # Sum all values in each column and sort by the cumulative total
+#         sort_list = df.sum().sort_values(ascending=not descending)
+#     else:
+#         # Sort by the last row values
+#         sort_list = df.iloc[-1].sort_values(ascending=not descending)
+    
+#     print(f'Sorted values for ranking: {sort_list}')
+    
+#     # Return the sorted column names
+#     if descending:
+#         return sort_list.index.tolist()[:-1] + [sort_list.index[-1]]  # largest last
+#     else:
+#         return [sort_list.index[0]] + sort_list.index.tolist()[1:]  # largest first
 
 def rank_by_columns(df, cumulative=False, descending=True):
-    # Sort when each column is being plotted individually
-    sort_list = df.iloc[-1].sort_values(ascending=not descending)  # Use `not descending` for the sort order
-    print(f'sorted values for ranking: {sort_list}')
-    
-    # If descending is True, return in reverse order, putting the largest last
-    if descending:
-        return sort_list.index.tolist()[:-1] + [sort_list.index[-1]]  # largest last
+    """
+    Rank columns in a DataFrame based on the last row or cumulative sum of values.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame
+    - cumulative (bool): If True, ranks by the cumulative sum of each column.
+    - descending (bool): Sort order; True for descending, False for ascending.
+
+    Returns:
+    - pd.Index: Ordered column names based on ranking.
+    """
+    if cumulative:
+        # Rank by cumulative sum
+        sort_list = df.sum().sort_values(ascending=not descending)
     else:
-        return [sort_list.index[0]] + sort_list.index.tolist()[1:]  # largest first
+        # Rank by the latest row
+        sort_list = df.iloc[-1].sort_values(ascending=not descending)
 
-
+    print(f"Ranked columns: {sort_list}")
+    return sort_list.index
 
 def top_ten_with_others(df, rank_col, sort_col, top_n=9):
 
@@ -463,7 +515,7 @@ def ranked_cleaning(df, num_col, sort_col, descending=True,use_sort_list=True):
 
 #     return df_copy, total
 
-def to_percentage(df, sum_col, index_col):
+def to_percentage(df, sum_col, index_col, percent=True):
 
     df_copy = df.copy()
 
@@ -472,10 +524,16 @@ def to_percentage(df, sum_col, index_col):
     # Calculate total usd_revenue
     total = df[sum_col].sum()
 
-    # Add a new column for percentage
-    df_copy['percentage'] = (df_copy[sum_col] / total) * 100
-    df_copy['legend_label'] = df_copy.apply(lambda x: f"{x[index_col]} ({x['percentage']:.1f}%)", axis=1)
-    df_copy.set_index('legend_label', inplace=True)
+    if percent:
+
+        # Add a new column for percentage
+        df_copy['percentage'] = (df_copy[sum_col] / total) * 100
+        df_copy['legend_label'] = df_copy.apply(lambda x: f"{x[index_col]} ({x['percentage']:.1f}%)", axis=1)
+        df_copy.set_index('legend_label', inplace=True)
+    else:
+        df_copy.set_index(index_col, inplace=True)
+        print(f'df_copy: {df_copy}')
+    
     df_copy.sort_values(by=sum_col, ascending=False, inplace=True)
     df_copy.drop_duplicates(inplace=True)
 

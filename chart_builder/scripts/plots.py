@@ -68,9 +68,21 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
     "custom_annotation is an array of dates we want annotations for value"
 
+    print(f'tick0 in func: {tick0}')
+
     if bgcolor == 'default':
         bgcolor = 'rgba(0,0,0,0)'
     fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    color_order = rank_by_columns(df, cumulative=True, descending=True)
+    
+    # Determine plotting order based on the latest value
+    plot_order = rank_by_columns(df, cumulative=False, descending=descending)
+
+    print(f"Color order (cumulative): {color_order}")
+    print(f"Plot order (latest value): {plot_order}")
+
+    color_map = {col: colors[idx % len(colors)] for idx, col in enumerate(color_order)}
 
     y1_lineto_show = None
     y2_lineto_show = None
@@ -86,10 +98,12 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
     else:
         x_range_start = df.index.min() 
         x_range_end = df.index.max()  
+
+    print(f'cumulative_sort: {cumulative_sort}')
   
     # Sort columns by descending or ascending
-    sort_list = rank_by_columns(df=df, cumulative=cumulative_sort, descending=descending)
-    columns_to_plot = sort_list
+    # sort_list = rank_by_columns(df=df, cumulative=cumulative_sort, descending=descending)
+    columns_to_plot = plot_order
 
     # Print for debugging
     print(f"descending: {descending}")
@@ -155,7 +169,7 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
             text=text_values,
             name=f'{y1_col} ({tickprefix["y1"] if tickprefix["y1"] else ""}{clean_values(df[y1_col].iloc[-1], decimal_places=decimal_places, decimals=decimals)}{ticksuffix["y1"] if ticksuffix["y1"] else ""})',
             stackgroup=None if area == False else 'one',
-            line=dict(color=column_color, width=line_width),
+            line=dict(color=color_map[y1_col], width=line_width),
             marker=dict(color=column_color, size=marker_size), 
             showlegend=show_legend,
             connectgaps=connectgaps,
@@ -332,6 +346,8 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
         ticksy = None    
     
     print(f'ticksy: {ticksy}')
+
+    print(f'[x_range_start, x_range_end]: {[x_range_start, x_range_end]}')
 
 
     if pd.api.types.is_datetime64_any_dtype(df.index):
@@ -931,9 +947,11 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
                       legend_font_size=14, tickformat=dict(x="%b %y", y1=".2s", y2=".2s"), dtick=None, decimals=True, decimal_places=1,
                       dimensions=dict(width=730, height=400), remove_zero=False, custom_ticks=False,
                       connectgaps=True, descending=True, show_legend=True, tick0=None,font_family=None,font_color='black',file_type='svg'
-                      ,directory='../img',custom_annotation=[]):
+                      ,directory='../img',custom_annotation=[],cumulative_sort=False,line_width=4,marker_size=10):
     
     combined_colors = colors
+
+    print(f'tick0: {tick0}')
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     traces = []
@@ -943,7 +961,7 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
     x_range_end = df.index.max() 
 
     if sort_list:
-        sort_list = rank_by_col(df=df, sort_col=sort_col, num_col=col, descending=descending)
+        sort_list = rank_by_col(df=df, sort_col=sort_col, num_col=col, descending=descending,cumulative_sort=cumulative_sort)
     else:
         sort_list = df.columns.to_list()
 
@@ -955,7 +973,8 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
             x=i_df.index,
             y=i_df[col],
             name=f'{i} ({tickprefix if tickprefix else ""}{clean_values(i_df[col].iloc[-1], decimals=decimals, decimal_places=decimal_places) if i_df.index.max() == df.index.max() else 0}{ticksuffix if ticksuffix else ""})',
-            marker=dict(color=color),
+            line=dict(color=color, width=line_width),
+            marker=dict(color=color, size=marker_size), 
             mode=mode,
             connectgaps=connectgaps,
             stackgroup=None if not area else 'one',
@@ -1432,16 +1451,22 @@ def pie_chart(df, sum_col, index_col, title, save=False,colors=combined_colors,b
               show_legend=False,text_font_size=12,text_font_color='white',texttemplate=None):
     
     original_labels = df[index_col].unique()
-    
-    df, total = to_percentage(df, sum_col, index_col)
-    padded_labels = [f"{label}    " for label in df.index]
+    print(f'original_labels: {original_labels}')
 
     if textinfo == 'percent+label':
-        labels = original_labels
-        print(f'{textinfo}, {labels}')
+        percent=False
     else:
-        labels = padded_labels
-        print(f'{textinfo}, {labels}')
+        percent=True
+    
+    df, total = to_percentage(df, sum_col, index_col,percent=percent)
+    padded_labels = [f"{label}    " for label in df.index]
+
+    # if textinfo == 'percent+label':
+    #     labels = original_labels
+    #     print(f'{textinfo}, {labels}')
+    # else:
+    labels = padded_labels
+    print(f'{textinfo}, {labels}')
 
     print(f'textinfo: {textinfo}')
 
