@@ -5,3 +5,4 @@ kaleido
 svgwrite
 python-dotenv
 colorcet
+matplotlib

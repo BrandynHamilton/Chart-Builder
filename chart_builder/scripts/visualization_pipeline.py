@@ -17,7 +17,7 @@ print("Current directory:", current_dir)
 # from pipeline import data_pipeline  # Adjust the import based on your actual module structure
 
 from chart_builder.scripts.utils import colors, clean_values, clean_values_dollars, ranked_cleaning, to_percentage, rank_by_col, rank_by_columns, normalize_to_percent, data_processing, top_other_ts_by_col, top_other_ts_by_columns, top_ts_by_col, top_ts_only_by_columns, cleaning, cleaning_values, top_by_col, top_other_by_col,to_time
-from chart_builder.scripts.plots import simple_bar_plot, simple_line_plot, sorted_bar_chart, sorted_multi_line, ranked_bar_chart, line_and_bar, pie_chart
+from chart_builder.scripts.plots import simple_bar_plot, simple_line_plot, sorted_bar_chart, sorted_multi_line, ranked_bar_chart, line_and_bar, pie_chart, datetime_format
 
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -38,7 +38,7 @@ class visualization_pipeline():
                  subtitle=None, colors=combined_colors, axes_data=dict(y1=[],y2=[]), axes_titles=dict(y1=None,y2=None),
                   mode='lines',area=False, fill=None,tickprefix=dict(y1=None,y2=None), ticksuffix=dict(y1=None,y2=None),
                   annotation_prefix=None,annotation_suffix=None, legend_orientation='v',show_legend=False, annotations=False, 
-                  max_annotation=False,bgcolor='rgba(0,0,0,0)', tickangle=None, legend_placement=dict(x=0.025,y=1),
+                  max_annotation=False,bgcolor='rgba(0,0,0,0)', tickangle=None, legend_placement=dict(x=0.2,y=0.9),
                   margin=dict(l=0, r=0, t=25, b=0), sort_list = True,tick0='min', remove_zero=False, custom_ticks=False,
                   line_width=4, marker_size=10,cumulative_sort=False,decimal_places=1,decimals=True,groupby=None, 
                 itemsizing='constant',num_col=None,barmode='stack',tickformat=dict(x='%b %d <br>%y',y1=None,y2=None),
@@ -49,7 +49,10 @@ class visualization_pipeline():
                 to_percent=False,normalize=False,start_date=None, end_date=None,connectgaps=True,drop_duplicates=True,auto_title=False,descending=True,
                 set_time_col=False,drop_mid_timefreq=True,agg_func='sum',clean_dates=True,ffill=False,font_family='Cardo',font_color='black',
                 directory='../img',custom_annotation=None,buffer=None,textinfo='percent+label',ytick_num=6,
-                axes_font_colors=dict(y1='black',y2='black'),file_type='svg',texttemplate='%{label}<br>%{percent}',use_single_color=False):
+                axes_font_colors=dict(y1='black',y2='black'),file_type='svg',texttemplate='%{label}<br>%{percent}',use_single_color=False,
+                days_first=False,autosize=True,legend_background=dict(bgcolor='white',bordercolor='black',
+                                                                                                    borderwidth=1, itemsizing='constant',
+                                                                                                    yanchor="top",xanchor="center" )):
         
         custom_template = pio.templates["plotly"]
         custom_template.layout.font.family = font_family
@@ -111,7 +114,7 @@ class visualization_pipeline():
             df = data_processing(path=func_file,file=None,cols=cols_to_plot,turn_to_time=turn_to_time,time_col=time_col,
                              fillna=fillna,keepna=keepna,dropna_col=dropna_col,dropna=dropna,start_date=start_date,end_date=end_date,drop_duplicates=drop_duplicates,
                              resample_freq=resample_freq,set_time_col=set_time_col,drop_mid_timefreq=drop_mid_timefreq,agg_func=agg_func,
-                             to_clean_dates=clean_dates,sort_col=groupby)
+                             to_clean_dates=clean_dates,sort_col=groupby,dayfirst=days_first)
         else:
             df=df.copy()
 
@@ -135,14 +138,14 @@ class visualization_pipeline():
             print(f'normalizing...')
             df = normalize_to_percent(df=df,num_col=num_col)
             print(f'df: {df}')
-        
-        if to_percent == True:
-            if groupby == None:
-                df = df * 100
-            else:
-                df[num_col] = df[num_col]*100
                
         cols_to_plot = list(set(cols_to_plot))
+
+        if to_percent == True:
+            if groupby == None:
+                df[cols_to_plot] = df[cols_to_plot] * 100
+            else:
+                df[num_col] = df[num_col]*100
 
         if descending == False:
             traceorder = 'reversed'
@@ -151,10 +154,13 @@ class visualization_pipeline():
 
         df = df[cols_to_plot]
         self.df = df.copy()
+        self.autosize = autosize
+        self.legend_background = legend_background
         self.use_single_color=use_single_color
         self.cumulative_sort = cumulative_sort
         self.texttemplate = texttemplate
         self.file_type = file_type
+        self.font_size = font_size
         self.marker_size = marker_size
         self.axes_font_colors = axes_font_colors
         self.ytick_num = ytick_num
@@ -183,7 +189,6 @@ class visualization_pipeline():
         self.tickformat = tickformat
         self.tick_prefix=tickprefix
         self.ticksuffix = ticksuffix
-        self.sort_list = True
         self.traceorder = traceorder
         self.barmode = barmode
         self.mode = mode
@@ -306,14 +311,27 @@ class visualization_pipeline():
                 else:
                     self.df = top_other_ts_by_col(df=self.df, num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
 
+                # Convert to list if it's an Index type, then append 'Other'
+                if isinstance(self.axes_data['y1'], pd.Index):
+                    self.axes_data['y1'] = self.axes_data['y1'].tolist()
+
                 # Append only if y1 is a list
                 if isinstance(self.axes_data['y1'], list):
                     self.axes_data['y1'].append('Other')
+                    
+                print(f'self.axes_data: {self.axes_data["y1"]}')
+
+                self.cols_to_plot.append('Other')
+
+                print(f'self.cols_to_plot: {self.cols_to_plot}')
+                
             else:
                 if self.groupby == None:
                     self.df = top_ts_only_by_columns(df=self.df, topn=self.topn)
                 else:
                     self.df = top_ts_by_col(df=self.df, num_col=self.num_col, sort_col=self.groupby, topn=self.topn)
+            
+
         print(f'df after: {self.df}')
 
     def line_plot(self):
@@ -340,7 +358,8 @@ class visualization_pipeline():
                                 tickangle=self.tickangle,text=self.text,text_freq=self.text_freq,decimals=self.decimals,decimal_places=self.decimal_places,tick0=self.tick0,
                                 remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors,
                                 custom_annotation=self.custom_annotation,ytick_num=self.ytick_num,axes_font_colors=self.axes_font_colors,
-                                auto_title=self.auto_title,file_type = self.file_type,buffer=self.buffer,cumulative_sort=self.cumulative_sort,marker_size=self.marker_size,line_width=self.line_width)
+                                auto_title=self.auto_title,file_type = self.file_type,buffer=self.buffer,cumulative_sort=self.cumulative_sort,marker_size=self.marker_size,line_width=self.line_width,
+                                sort_list=self.sort_list,datetime_tick=self.datetime_tick,autosize=self.autosize,legend_background=self.legend_background, font_size=self.font_size)
             self.fig = fig
             return fig
         else:
@@ -353,7 +372,7 @@ class visualization_pipeline():
                                     connectgaps=self.connectgaps,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle, show_legend=self.show_legend,tick0=self.tick0
                                     ,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors
                                     ,custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,file_type = self.file_type,cumulative_sort=self.cumulative_sort,
-                                    marker_size=self.marker_size,line_width=self.line_width)
+                                    marker_size=self.marker_size,line_width=self.line_width, font_size=self.font_size,legend_background=self.legend_background)
             self.fig = fig
             return fig
 
@@ -373,7 +392,7 @@ class visualization_pipeline():
                                 decimals=self.decimals,colors=self.colors,tick0=self.tick0,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,
                                 font_color=self.font_color,directory=self.directory,
                                 custom_annotation=self.custom_annotation,buffer=self.buffer,decimal_places=self.decimal_places,ytick_num=self.ytick_num,
-                                auto_title=self.auto_title,datetime_tick=self.datetime_tick,file_type = self.file_type)
+                                auto_title=self.auto_title,datetime_tick=self.datetime_tick,file_type = self.file_type,sort_list=self.sort_list, font_size=self.font_size,legend_background=self.legend_background)
             self.fig = fig
             return fig
         else:
@@ -394,7 +413,7 @@ class visualization_pipeline():
                                     dimensions=self.dimensions,descending=self.descending,traceorder=self.traceorder,tickangle=self.tickangle,colors=self.colors,
                                      show_legend=self.show_legend,tick0=self.tick0,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,
                                 custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,buffer=self.buffer,ytick_num=self.ytick_num,
-                                  file_type = self.file_type,cumulative_sort=self.cumulative_sort)
+                                  file_type = self.file_type,cumulative_sort=self.cumulative_sort,text=self.text,text_freq=self.text_freq, text_position=self.textposition,text_font_size=self.text_font_size,autosize=self.autosize,legend_background=self.legend_background,font_size=self.font_size)
             self.fig = fig
             return fig
     
@@ -408,7 +427,7 @@ class visualization_pipeline():
                            margin=self.margin,auto_title=self.auto_title,tickformat=self.tickformat,barmode=self.barmode,tickangle=self.tickangle, fill=self.fill,
                            area=self.area,colors = self.colors,tick0=self.tick0,dtick=self.dtick,remove_zero=self.remove_zero, custom_ticks=self.custom_ticks,font_family=self.font_family,font_color=self.font_color,directory=self.directory,
                            custom_annotation=self.custom_annotation,decimal_places=self.decimal_places,decimals=self.decimals,buffer=self.buffer,ytick_num=self.ytick_num,file_type = self.file_type,show_legend=self.show_legend,axes_font_colors=self.axes_font_colors,
-                           legend_placement=self.legend_placement,line_color=self.line_color)
+                           legend_placement=self.legend_placement,line_color=self.line_color,bgcolor=self.bgcolor,autosize=self.autosize,legend_background=self.legend_background,legend_font_size=self.legend_font_size, font_size=self.font_size,mode=self.mode)
         self.fig = fig
         return fig
     
@@ -424,7 +443,7 @@ class visualization_pipeline():
                         annotation_suffix = self.annotation_suffix,
                         decimals=self.decimals,decimal_places=self.decimal_places,margin=self.margin,hole_size=self.hole_size,
                         line_width=self.line_width,font_family=self.font_family,font_color=self.font_color,directory=self.directory,colors=self.colors,show_legend=self.show_legend,text_font_size=self.text_font_size,
-                        textinfo=self.textinfo,file_type = self.file_type,texttemplate=self.texttemplate)
+                        textinfo=self.textinfo,file_type = self.file_type,texttemplate=self.texttemplate,annotation=self.annotations, font_size=self.font_size)
         self.fig = fig
         return fig
 
@@ -438,7 +457,7 @@ class visualization_pipeline():
                      legend_placement=self.legend_placement, minsize=self.text_font_size, legend_font_size=self.legend_font_size,margin=self.margin,showlegend=self.show_legend,
                      decimals=self.decimals,traceorder=self.traceorder,decimal_places=self.decimal_places, to_reverse=self.to_reverse,
                      tickformat=self.tickformat['y1'],dimensions=self.dimensions,descending=self.descending,use_sort_list=self.sort_list,show_text=self.text,font_family=self.font_family,font_color=self.font_color
-                    ,directory=self.directory,colors=self.colors,file_type = self.file_type,use_single_color=self.use_single_color)
+                    ,directory=self.directory,colors=self.colors,file_type = self.file_type,use_single_color=self.use_single_color, font_size=self.font_size)
         self.fig = fig
         return fig
 
@@ -544,49 +563,59 @@ class visualization_pipeline():
         )
 
     def add_dashed_line(self, date, annotation_text):
+        # Ensure the date matches the index type
+        if self.df.index.dtype == 'datetime64[ns]':
+            date = pd.to_datetime(date)
+
+        if date not in self.df.index:
+            print(f"Error: {date} is not in the DataFrame index.")
+            return
+
+        # Validate number_col
         if self.num_col:
             number_col = self.num_col
+            yvalue = self.df.loc[date, number_col].sum()
         else:
-            # Find the column with the maximum value for each row in the specified columns
+            # Validate cols_to_plot
+            for col in self.cols_to_plot:
+                if col not in self.df.columns:
+                    print(f"Error: {col} is not in DataFrame columns.")
+                    return
+
             self.df['max_value'] = self.df[self.cols_to_plot].max(axis=1)
             self.df['max_column'] = self.df[self.cols_to_plot].idxmax(axis=1)
+            number_col = self.df['max_column'].iloc[0]  # Assume a valid column
+            yvalue = self.df.loc[date, number_col]
 
-            # Overall maximum value across all specified columns
-            max_value_overall = self.df['max_value'].max()
-            max_column_overall = self.df[self.cols_to_plot].max().idxmax()  # Column with the overall max value
-            number_col=max_column_overall
+        # Validate column and calculate value
+        if number_col not in self.df.columns:
+            print(f"Error: {number_col} is not a valid column in the DataFrame.")
+            return
 
-        print(f'number_col: {number_col}')
-        print(f'date: {date}')
-        print(f'self.df.index: {self.df.index}')
+        # import pdb; pdb.set_trace()
 
-        print(f'self.df.loc[date, number_col]: {self.df.loc[date, number_col]}')
-            
-        yvalue= self.df.loc[date, number_col].max()
-        print(f'self.cols_to_plot: {self.cols_to_plot}')
+        if pd.isna(yvalue):
+            print(f"Warning: Missing value at {date} for {number_col}.")
+            return
+
+        # Add the dashed line and annotation
         self.fig.add_shape(
             type="line",
-             x0=date,
-             y0=0,  # Start from the bottom of the plot
-             x1=date,
-             y1=yvalue,  # Extend to the y-value at the date
-             line_dash="dot",
-             line=dict(color="black", width=3),
-
+            x0=date,
+            y0=0,
+            x1=date,
+            y1=yvalue*1.25,
+            line_dash="dot",
+            line=dict(color="black", width=3),
         )
         self.fig.add_annotation(
             x=date,
-            y=yvalue,
-            text=annotation_text+f'<br>{date}',
+            y=yvalue*1.25,
+            text=f"{annotation_text}<br>{pd.to_datetime(date).strftime(datetime_format)}",
             showarrow=False,
-            arrowhead=2,
-            ax=-10,
-            ay=-50,
-            arrowsize=1.5,
-            arrowwidth=1.5,
             font=dict(size=self.text_font_size, family=self.font_family, color="black"),
-            arrowcolor='black'  # Customize arrow color if needed
         )
+
 
 
 
@@ -637,11 +666,11 @@ class visualization_pipeline():
             self.date_position['y'] = y
 
         if date == None and dt_index==True:
-            data_date = self.df.index[-1].strftime('%m-%d-%Y')
+            data_date = self.df.index[-1].strftime(datetime_format)
         elif date == None and dt_index == False:
             data_date = self.df.index[-1]
         elif date:
-            data_date = pd.to_datetime(date).strftime('%m-%d-%Y')
+            data_date = pd.to_datetime(date).strftime(datetime_format)
 
         self.fig.add_annotation(
             text=data_date,

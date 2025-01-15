@@ -7,6 +7,183 @@ import os
 import matplotlib.cm as cm
 from matplotlib.colors import to_hex
 import colorcet as cc
+import json
+import numpy as np
+
+
+def dynamic_parameters(df, num_col='market_cap', scale=100, use_log_scale=False):
+    max_value = df[num_col].max()
+    min_value = df[num_col].min()
+
+    # Apply logarithmic scaling if enabled
+    if use_log_scale:
+        df[num_col] = df[num_col].apply(lambda x: np.log1p(x))  # log1p to handle zeros safely
+        max_value = df[num_col].max()
+        min_value = df[num_col].min()
+
+    # Compute dynamic marker_scale
+    dynamic_marker_scale = max_value / scale  # Adjust divisor as needed
+
+    return {
+        'dynamic_marker_scale': dynamic_marker_scale,
+    }
+
+def calculate_marker_size(value, scaling_factor, max_size=225, min_size=5):
+    size = min(value / scaling_factor, max_size)  # Cap the size
+    size = max(size, min_size)  # Ensure a minimum size
+    return size
+
+def top_other_by_col_bubble(df, sort_col, sum_col, num=10, latest=True, groupby_color=None):
+    print("\n=== Initial DataFrame ===")
+    print(df)
+
+    # Determine the columns to group by
+    group_cols = [sort_col]
+    if 'id' in df.columns:
+        group_cols.append('id')
+    if groupby_color and groupby_color not in group_cols:
+        group_cols.append(groupby_color)
+    if 'category' in df.columns and 'category' not in group_cols:
+        group_cols.append('category')
+
+    # Ensure group_cols contains unique values while preserving order
+    group_cols = list(dict.fromkeys(group_cols))
+
+    print("\n=== Grouping Columns ===")
+    print(group_cols)
+
+    # Aggregate the sum by sort_col for the entire DataFrame
+    total_sum_by_group = df.groupby(sort_col)[sum_col].sum()
+    print("\n=== Total Sum by Group ===")
+    print(total_sum_by_group)
+
+    # Handle top N filtering with 'latest' option
+    if latest:
+        recent = (
+            df.groupby(group_cols)
+            .tail(1)
+            .sort_values(by=sum_col, ascending=False)
+            .head(num)
+        )
+        recent_keys = recent[group_cols].drop_duplicates()
+        print("\n=== Recent Top N (Latest) Keys ===")
+        print(recent_keys)
+
+        filtered_df = df.merge(recent_keys, on=group_cols)
+    else:
+        top = df.groupby(group_cols)[sum_col].sum()
+        top_n = top.nlargest(num).reset_index()[group_cols]
+        print("\n=== Top N (Non-Latest) Keys ===")
+        print(top_n)
+
+        filtered_df = df.merge(top_n, on=group_cols)
+
+    print("\n=== Filtered Top N DataFrame ===")
+    print(filtered_df)
+
+    # Sum the values for the top N entries
+    top_sum_by_group = filtered_df.groupby(sort_col)[sum_col].sum()
+    print("\n=== Top N Sum by Group ===")
+    print(top_sum_by_group)
+
+    print(f'total sum: {total_sum_by_group}')
+
+    # Calculate the 'Other' value by subtracting top_sum_by_group from total_sum_by_group
+    other_value = (total_sum_by_group.sum() - top_sum_by_group.sum())
+    print(f'other_value: {other_value}')
+    other_sum_by_group = pd.DataFrame({
+        sort_col: ['Other'],
+        sum_col: [other_value]
+    })
+
+    print(f'other_sum_by_group: {other_sum_by_group}')
+
+    # Rename sum_col to match the aggregated column name
+    # other_sum_by_group.rename(columns={sum_col: 'other_sum'}, inplace=True)
+    # other_sum_by_group = other_sum_by_group.rename(columns={'other_sum': sum_col})
+    print("\n=== Other Values Grouped DataFrame ===")
+    other_sum_by_group = other_sum_by_group.groupby(sort_col)[[sum_col]].sum()
+    print(other_sum_by_group)
+
+    # Create 'Other' DataFrame
+    other_df = other_sum_by_group.copy()
+    if 'id' in df.columns:
+        other_df['id'] = 'other'
+    if groupby_color not in df.columns:
+        other_df[groupby_color] = 'other'
+    if 'symbol' in df.columns:
+        other_df['symbol'] = 'Other'
+    if 'category' in df.columns:
+        other_df['category'] = 'other'
+    if 'network' not in other_df.columns:
+        other_df['network'] = 'Other'
+    
+    # other_df = other_df.reset_index()
+
+    print("\n=== Other DataFrame ===")
+    print(other_df)
+
+    if other_value > 0:
+    # Combine filtered_df and other_df
+        combined = pd.concat([filtered_df, other_df], ignore_index=True)
+    else:
+        combined = filtered_df.copy()
+    combined.sort_index(inplace=True)
+
+    print("\n=== Combined DataFrame ===")
+    print(combined)
+
+    return combined
+
+
+
+def top_by_col_bubble(df, sort_col, sum_col, num=10, latest=True, groupby_color=None):
+    print("\n=== Initial DataFrame ===")
+    print(df)
+
+    # Determine the columns to group by
+    group_cols = [sort_col]
+    if 'id' in df.columns:
+        group_cols.append('id')
+    if groupby_color:
+        group_cols.append(groupby_color)
+
+    print("\n=== Grouping Columns ===")
+    # Ensure group_cols contains unique values while preserving order
+    group_cols = list(dict.fromkeys(group_cols))
+
+    print(group_cols)
+
+    # Handle top N filtering with 'latest' option
+    if latest:
+        recent = (
+            df.groupby(group_cols)
+            .tail(1)
+            .sort_values(by=sum_col, ascending=False)
+            .head(num)
+        )
+        recent_keys = recent[group_cols].drop_duplicates()
+        print("\n=== Recent Top N (Latest) Keys ===")
+        print(recent_keys)
+
+        filtered_df = df.merge(recent_keys, on=group_cols)
+    else:
+        top = df.groupby(group_cols)[sum_col].sum()
+        top_n = top.nlargest(num).reset_index()[group_cols]
+        print("\n=== Top N (Non-Latest) Keys ===")
+        print(top_n)
+
+        filtered_df = df.merge(top_n, on=group_cols)
+
+    print("\n=== Filtered Top N DataFrame ===")
+    print(filtered_df)
+
+    filtered_df.sort_index(inplace=True)
+
+    print("\n=== filtered_df DataFrame ===")
+    print(filtered_df)
+
+    return filtered_df
 
 def clean_values(x, decimals=True, decimal_places=1):
     if isinstance(x, pd.Series):
@@ -230,7 +407,7 @@ def colors(shuffle=False):
     if shuffle:
         random.shuffle(lib_colors)
 
-    print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+    # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
     
     return lib_colors
 
@@ -345,17 +522,15 @@ def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to
 
     return df
 
+def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, colors=None):
+    print(f"df @ rank_by_col: {df}")
 
-def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False):
-    print(f'df @ rank_by_col: {df}')
-    # Ensure the DataFrame's index is sorted by date
-    print(f'before sort, index order: {df.index}')
     df.sort_index(inplace=True)
-    print(f'after sort, index order: {df.index}')
 
+    # Generate cumulative sort order
     if cumulative_sort:
         # Calculate cumulative sum and sort by `num_col`
-        sorted_list = (
+        cumulative_sorted_list = (
             df.groupby(sort_col)[num_col]
             .sum()
             .sort_values(ascending=not descending)
@@ -363,39 +538,43 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False):
             .tolist()
         )
     else:
-        # Get all unique values of `sort_col`
-        all_signers = df[sort_col].unique()
+        cumulative_sorted_list = []
 
-        # Identify the last day in the dataset
-        last_day = df.index.max()
+    # Generate plot/legend order based on the latest values
+    all_signers = df[sort_col].unique()
+    last_day = df.index.max()
+    last_records = df.groupby(sort_col).tail(1)
+    last_day_records = last_records[last_records.index == last_day]
 
-        # Get the last record for each unique value in `sort_col`
-        last_records = df.groupby(sort_col).tail(1)
+    missing_signers = set(all_signers) - set(last_day_records[sort_col])
+    missing_df = pd.DataFrame({
+        sort_col: list(missing_signers),
+        num_col: 0
+    })
+    combined_df = pd.concat([last_day_records, missing_df])
+    combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
 
-        # Filter for records on the last day
-        last_day_records = last_records[last_records.index == last_day]
+    # Generate the sorted list for plotting
+    latest_sorted_list = combined_df.reset_index()[sort_col].values.tolist()
 
-        # Identify missing values in `sort_col` that need 0 transactions
-        missing_signers = set(all_signers) - set(last_day_records[sort_col])
+    # Generate the color map based on cumulative or latest sort
+    if colors:
+        if cumulative_sort:
+            # Colors based on cumulative rank
+            if descending:
+                color_map = {val: colors[idx % len(colors)] for idx, val in enumerate(cumulative_sorted_list)}
+            else:
+                color_map = {val: colors[idx % len(colors)] for idx, val in enumerate(reversed(cumulative_sorted_list))}
+        else:
+            # Colors based on latest value rank
+            if descending:
+                color_map = {val: colors[idx % len(colors)] for idx, val in enumerate(latest_sorted_list)}
+            else:
+                color_map = {val: colors[idx % len(colors)] for idx, val in enumerate(reversed(latest_sorted_list))}
+    else:
+        color_map = {}
 
-        # Create a DataFrame for missing signers with 0 transactions
-        missing_df = pd.DataFrame({
-            sort_col: list(missing_signers),
-            num_col: 0
-        })
-
-        # Append missing records to last day records
-        combined_df = pd.concat([last_day_records, missing_df])
-
-        # Sort by `num_col` based on the descending parameter
-        combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
-
-        print(f'ending index order: {combined_df.reset_index()[sort_col].values.tolist()}')
-
-        # Convert to a list of `sort_col` values
-        sorted_list = combined_df.reset_index()[sort_col].values.tolist()
-
-    return sorted_list
+    return latest_sorted_list, color_map
 
 # def rank_by_columns(df, cumulative=False, descending=True):
 #     """
@@ -438,7 +617,7 @@ def rank_by_columns(df, cumulative=False, descending=True):
     """
     if cumulative:
         # Rank by cumulative sum
-        sort_list = df.sum().sort_values(ascending=not descending)
+        sort_list = df.select_dtypes(include=['number']).sum().sort_values(ascending=not descending)
     else:
         # Rank by the latest row
         sort_list = df.iloc[-1].sort_values(ascending=not descending)
@@ -649,6 +828,7 @@ def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
 
 def top_other_ts_by_col(df,num_col, sort_col, topn=9):
     list = rank_by_col(df=df,sort_col=sort_col,num_col=num_col)
+    list = list[0]
     top_df = df[df[sort_col].isin(list[0:topn])]
 
     other = df[~df[sort_col].isin(list[0:topn])]
@@ -680,6 +860,8 @@ def top_other_ts_by_columns(df, topn=9, num_other = False):
 
 def top_ts_by_col(df,num_col, sort_col, topn=9):
     list = rank_by_col(df=df,sort_col=sort_col,num_col=num_col)
+    list = list[0]
+    print(f'list: {list}')
     top_df = df[df[sort_col].isin(list[0:topn])]
 
     return top_df
@@ -884,14 +1066,14 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
     if clean_values == True:
         fig.clean_values()
 
+    if groupby:
+        fig.group_data(how=groupbyHow)
+
     if keep_top_n == True:
         if other == False:
             fig.keep_top_n(topn=topn, other=False)
         else:
             fig.keep_top_n(topn=topn, other=True)
-
-    if groupby:
-        fig.group_data(how=groupbyHow)
 
     if clean_columns == True:
         fig.clean_columns(capwords=capwords,clean_words=clean_words)
@@ -915,6 +1097,16 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
     if save == True:
         fig.save_fig(filetype=file_type)
 
-
+def open_json(file_name):
+    try:
+        with open(file_name, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        print("JSON data loaded successfully!")
+        print(data)  # Print the JSON content (optional)
+    except FileNotFoundError:
+        print(f"File {file_name} not found.")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+    return data
 
 
