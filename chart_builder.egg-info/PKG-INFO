@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: chart_builder
-Version: 0.2.8
+Version: 0.2.9
 Summary: A library for building customizable charts in Python
 Home-page: https://github.com/BrandynHamilton/Chart-Builder
 Author: Brandyn Hamilton
@@ -19,6 +19,7 @@ Requires-Dist: svgwrite
 Requires-Dist: python-dotenv
 Requires-Dist: colorcet
 Requires-Dist: matplotlib
+Requires-Dist: nbformat
 
 # A Library for High-Quality, Reproducable Charts
 

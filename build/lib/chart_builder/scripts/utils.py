@@ -28,7 +28,7 @@ def dynamic_parameters(df, num_col='market_cap', scale=100, use_log_scale=False)
         'dynamic_marker_scale': dynamic_marker_scale,
     }
 
-def calculate_marker_size(value, scaling_factor, max_size=225, min_size=5):
+def calculate_marker_size(value, scaling_factor, max_size=210, min_size=8):
     size = min(value / scaling_factor, max_size)  # Cap the size
     size = max(size, min_size)  # Ensure a minimum size
     return size
@@ -529,7 +529,9 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, c
 
     # Generate cumulative sort order
     if cumulative_sort:
+        # breakpoint()
         # Calculate cumulative sum and sort by `num_col`
+        print(f'df: {df}')
         cumulative_sorted_list = (
             df.groupby(sort_col)[num_col]
             .sum()
@@ -551,7 +553,11 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, c
         sort_col: list(missing_signers),
         num_col: 0
     })
-    combined_df = pd.concat([last_day_records, missing_df])
+    print(f"Available columns in df: {df.columns}")
+    print(f"sort_col: {sort_col}")
+    print(f"num_col: {num_col}")
+
+    combined_df = pd.concat([last_day_records.reset_index(drop=True), missing_df.reset_index(drop=True)])
     combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
 
     # Generate the sorted list for plotting
@@ -795,7 +801,7 @@ def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
         sum_col: other_values.values
         })
 
-        combined = pd.concat([filtered_df,other_df], ignore_index=True)
+        combined = pd.concat([filtered_df,other_df], ignore_index=False)
         combined.sort_index(inplace=True)
     else:
         top = df.groupby(sort_col)[sum_col].sum()

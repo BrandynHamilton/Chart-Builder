@@ -6,3 +6,4 @@ svgwrite
 python-dotenv
 colorcet
 matplotlib
+nbformat
