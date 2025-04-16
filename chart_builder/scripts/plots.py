@@ -620,6 +620,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
     #     reversed_colors = [color_map[col] for col in reversed(columns_to_plot)]
     #     color_map = {col: reversed_colors[idx] for idx, col in enumerate(columns_to_plot)}
     print(f'reversed color map: {color_map}')
+    print(f'axes_titles: {axes_titles}')
     
     # Assign colors based on position (last-ranked gets the first color in reversed list)
     for idx, y1_col in enumerate(columns_to_plot):
@@ -917,7 +918,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
             tickfont=dict(size=font_size, family=font_family, color=font_color),
             ticksuffix=ticksuffix.get("y1", ""),
             tickprefix=tickprefix.get("y1", ""),
-            tickformat=tickformat.get("y1", "")
+            tickformat=tickformat.get("y1", ""),
         ),
         yaxis2=dict(
             tickfont=dict(size=font_size, family=font_family, color=font_color),
@@ -943,7 +944,7 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
                  ytick_num=6,axes_font_colors=dict(y1='black',y2='black'),show_legend=True, legend_background=dict(bgcolor='white',bordercolor='black',
                                                                                                                               borderwidth=1, itemsizing='constant',buffer = 5),
                                                                                                                               autosize=True):
-    
+    print(f'line_width: {line_width}')
     if bgcolor == 'default':
         bgcolor = 'rgba(0,0,0,0)'
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -982,6 +983,8 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
     color_iter = iter(colors)  # Create an iterator for the colors
     rev_color_iter = reversed(colors[:-1])
     print(f'reversed color iter: {rev_color_iter}')
+    print(f'line_width at line col: {line_width}')
+
     for i, col in enumerate(line_col):
         color = line_color if i == 0 else next(rev_color_iter, "black")
         print(f'color for line{color}')
@@ -1564,7 +1567,7 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
 
     return fig
 
-def sorted_bar_chart(df, title, save=False, colors=combined_colors, col=None, sort_col=None, sort_list=True,
+def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sort_col=None, sort_list=True,
                       tickprefix=None, ticksuffix=None, font_size=18, remove_zero=False, custom_ticks=False,
                       bgcolor='rgba(0,0,0,0)', legend_orientation='h', bar_orientation='v', tickangle=None,
                       dtick=None, margin=dict(l=0, r=0, t=0, b=0), decimals=True, traceorder='normal',
@@ -2304,9 +2307,9 @@ def bubble_chart(df, groupby, num_col, keep_topn=False, other=False, topn=10, ti
         font=dict(size=text['general'], family="IBM Plex Mono", color="black"),
         margin=dict(t=margin_t, b=0, l=0, r=0),
         legend=dict(
-            orientation='h',
-            x=0,
-            y=1,
+            orientation='v',
+            x=0.9,
+            y=0.5,
             font=dict(size=12),
             xanchor="left",         # Anchor the legend to the left
             yanchor="bottom",
