@@ -389,26 +389,41 @@ def latest_values(series):
     return formatted_val, formatted_date
 
 def colors(shuffle=False):
-    # Existing Plotly palettes
+    on_colors = ['#00CC96', '#67D8FE','#FF7EBE', '#FFBC36', '#E6FF59']
+    
     color_palette = pc.qualitative.Plotly[::-1]
     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
-    
-    # Add Matplotlib colors
-    matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
-                        [to_hex(cm.Set1(i)) for i in range(9)]
-    
-    # Add Colorcet colors
-    colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
+    lib_colors = distinct_palette+color_palette
 
-    # Combine all palettes
-    lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
-
-    if shuffle:
+    if shuffle==True:
         random.shuffle(lib_colors)
 
-    # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+    combined_colors = on_colors + lib_colors
+    print(f'Combined colors: {combined_colors} \nCombined colors length: {len(combined_colors)}')
     
-    return lib_colors
+    return combined_colors
+
+# def colors(shuffle=False):
+#     # Existing Plotly palettes
+#     color_palette = pc.qualitative.Plotly[::-1]
+#     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
+    
+#     # Add Matplotlib colors
+#     matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
+#                         [to_hex(cm.Set1(i)) for i in range(9)]
+    
+#     # Add Colorcet colors
+#     colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
+
+#     # Combine all palettes
+#     lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
+
+#     if shuffle:
+#         random.shuffle(lib_colors)
+
+#     # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+    
+#     return lib_colors
 
 def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to_time=True, dropna=False, fillna=False, ffill=False, resample_freq=None,
                     delimiter=',', start_date=None, end_date=None, cols=None, dropna_col=False,
@@ -889,8 +904,8 @@ def top_other_ts_by_col(df,num_col, sort_col, topn=9):
 
     return combined
 
-def top_other_ts_by_columns(df, topn=9, num_other = False):
-    list = rank_by_columns(df)
+def top_other_ts_by_columns(df, topn=9, cumulative_sort=False, num_other = False):
+    list = rank_by_columns(df,cumulative_sort)
     print(f'top {topn} cols: {list[0:topn]}')
     other_cols = [col for col in df.columns if col not in(list[0:topn])]
     print(f'other cols: {other_cols}')

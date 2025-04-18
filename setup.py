@@ -19,7 +19,8 @@ setup(
         "python-dotenv",
         "colorcet",
         "matplotlib",
-        "nbformat"
+        "nbformat",
+        "networkx"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

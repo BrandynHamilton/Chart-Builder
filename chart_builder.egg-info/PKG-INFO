@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: chart_builder
 Version: 0.2.9
 Summary: A library for building customizable charts in Python
@@ -20,6 +20,16 @@ Requires-Dist: python-dotenv
 Requires-Dist: colorcet
 Requires-Dist: matplotlib
 Requires-Dist: nbformat
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # A Library for High-Quality, Reproducable Charts
 
