@@ -985,21 +985,6 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
     print(f'reversed color iter: {rev_color_iter}')
     print(f'line_width at line col: {line_width}')
 
-    for i, col in enumerate(line_col):
-        color = line_color if i == 0 else next(rev_color_iter, "black")
-        print(f'color for line{color}')
-        print(f'line col: {df[col]}')
-        fig.add_trace(go.Scatter(
-            x=df.index,
-            y=df[col],
-            name=f'{col} ({tickprefix["y2"] if tickprefix["y2"] else ""}{clean_values(df[col].iloc[-1], decimals=decimals, decimal_places=decimal_places)}{ticksuffix["y2"] if ticksuffix["y2"] else ""}){space_buffer}',
-            mode=mode,
-            stackgroup=None if area == False else 'one',
-            line=dict(color=color, width=line_width),
-            marker=dict(color=color, size=marker_size),
-            showlegend=show_legend
-        ), secondary_y=y2_axis)
-
     if fill == None:
         # Add bar traces without specifying `width` to maintain default spacing
         for col in bar_col:
@@ -1023,6 +1008,21 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
                 fill=fill,  # This creates the area chart by filling to the x-axis (y=0)
                 showlegend=show_legend
             ), secondary_y=False)
+    
+    for i, col in enumerate(line_col):
+        color = line_color if i == 0 else next(rev_color_iter, "black")
+        print(f'color for line{color}')
+        print(f'line col: {df[col]}')
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[col],
+            name=f'{col} ({tickprefix["y2"] if tickprefix["y2"] else ""}{clean_values(df[col].iloc[-1], decimals=decimals, decimal_places=decimal_places)}{ticksuffix["y2"] if ticksuffix["y2"] else ""}){space_buffer}',
+            mode=mode,
+            stackgroup=None if area == False else 'one',
+            line=dict(color=color, width=line_width),
+            marker=dict(color=color, size=marker_size),
+            showlegend=show_legend
+        ), secondary_y=y2_axis)
 
     if custom_annotation:
         for date in custom_annotation:

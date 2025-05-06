@@ -597,6 +597,10 @@ class visualization_pipeline():
         if self.df.index.dtype == 'datetime64[ns]':
             date = pd.to_datetime(date)
 
+        print(f'date: {date}')
+        print(f'self.df.index: {self.df.index}')
+        print(f'self.df.index type: {type(self.df.index)}')
+
         if date not in self.df.index:
             print(f"Error: {date} is not in the DataFrame index.")
             return

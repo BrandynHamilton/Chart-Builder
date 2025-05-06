@@ -92,7 +92,7 @@ def top_other_by_col_bubble(df, sort_col, sum_col, num=10, latest=True, groupby_
     other_value = (total_sum_by_group.sum() - top_sum_by_group.sum())
     print(f'other_value: {other_value}')
     other_sum_by_group = pd.DataFrame({
-        sort_col: ['Other'],
+        sort_col: ['other'],
         sum_col: [other_value]
     })
 
@@ -112,11 +112,11 @@ def top_other_by_col_bubble(df, sort_col, sum_col, num=10, latest=True, groupby_
     if groupby_color not in df.columns:
         other_df[groupby_color] = 'other'
     if 'symbol' in df.columns:
-        other_df['symbol'] = 'Other'
+        other_df['symbol'] = 'other'
     if 'category' in df.columns:
         other_df['category'] = 'other'
     if 'network' not in other_df.columns:
-        other_df['network'] = 'Other'
+        other_df['network'] = 'other'
     
     # other_df = other_df.reset_index()
 
@@ -206,8 +206,8 @@ def clean_values(x, decimals=True, decimal_places=1):
             print(f'x:{x}M')
             return f'{x / 1e6:.{decimal_places}f}M'  # Million
         elif x >= 1e3 or x <= -1e3:
-            print(f'x:{x}K')
-            return f'{x / 1e3:.{decimal_places}f}K'  # Thousand
+            print(f'x:{x}k')
+            return f'{x / 1e3:.{decimal_places}f}k'  # Thousand
         elif x >= 1e2 or x <= -1e2:
             print(f'x:{x}')
             return f'{x:.{decimal_places}f}'  # Show as is for hundreds
@@ -222,13 +222,13 @@ def clean_values(x, decimals=True, decimal_places=1):
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
             return f'{x:.2f}'  # Keep small values with two decimal points
         elif x >= 1e12 or x <= -1e12:
-            return f'{x / 1e12:.0f}T'  # Trillion
+            return f'{x / 1e12:.0f}t'  # Trillion
         elif x >= 1e9 or x <= -1e9:
-            return f'{x / 1e9:.0f}B'  # Billion
+            return f'{x / 1e9:.0f}b'  # Billion
         elif x >= 1e6 or x <= -1e6:
-            return f'{x / 1e6:.0f}M'  # Million
+            return f'{x / 1e6:.0f}m'  # Million
         elif x >= 1e3 or x <= -1e3:
-            return f'{x / 1e3:.0f}K'  # Thousand
+            return f'{x / 1e3:.0f}k'  # Thousand
         elif x >= 1e2 or x <= -1e2:
             return f'{x:.0f}'  # Show as is for hundreds
         elif x >= 1 or x <= -1:
@@ -249,7 +249,7 @@ def clean_values_dollars(x):
     elif x >= 1e6 or x <= -1e6:
         return f'-${abs(x / 1e6):,.1f}M' if x < 0 else f'${x / 1e6:,.1f}M'  # Million
     elif x >= 1e3 or x <= -1e3:
-        return f'-${abs(x / 1e3):,.0f}K' if x < 0 else f'${x / 1e3:,.0f}K'  # Thousand
+        return f'-${abs(x / 1e3):,.0f}k' if x < 0 else f'${x / 1e3:,.0f}K'  # Thousand
     elif x >= 1e2 or x <= -1e2:
         return f'-${abs(x):,.0f}' if x < 0 else f'${x:,.0f}'  # Show as is for hundreds
     elif x >= 1 or x <= -1:
@@ -281,7 +281,6 @@ def to_df(file, delimiter=','):
     except Exception as e:
         print(f"Error loading {df_path}: {e}")
 
-    
 def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True, drop_mid_timefreq=True):
     import pandas as pd
 
@@ -390,26 +389,41 @@ def latest_values(series):
     return formatted_val, formatted_date
 
 def colors(shuffle=False):
-    # Existing Plotly palettes
+    on_colors = ['#00CC96', '#67D8FE','#FF7EBE', '#FFBC36', '#E6FF59']
+    
     color_palette = pc.qualitative.Plotly[::-1]
     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
-    
-    # Add Matplotlib colors
-    matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
-                        [to_hex(cm.Set1(i)) for i in range(9)]
-    
-    # Add Colorcet colors
-    colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
+    lib_colors = distinct_palette+color_palette
 
-    # Combine all palettes
-    lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
-
-    if shuffle:
+    if shuffle==True:
         random.shuffle(lib_colors)
 
-    # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+    combined_colors = on_colors + lib_colors
+    print(f'Combined colors: {combined_colors} \nCombined colors length: {len(combined_colors)}')
     
-    return lib_colors
+    return combined_colors
+
+# def colors(shuffle=False):
+#     # Existing Plotly palettes
+#     color_palette = pc.qualitative.Plotly[::-1]
+#     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
+    
+#     # Add Matplotlib colors
+#     matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
+#                         [to_hex(cm.Set1(i)) for i in range(9)]
+    
+#     # Add Colorcet colors
+#     colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
+
+#     # Combine all palettes
+#     lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
+
+#     if shuffle:
+#         random.shuffle(lib_colors)
+
+#     # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+    
+#     return lib_colors
 
 def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to_time=True, dropna=False, fillna=False, ffill=False, resample_freq=None,
                     delimiter=',', start_date=None, end_date=None, cols=None, dropna_col=False,
@@ -638,7 +652,7 @@ def top_ten_with_others(df, rank_col, sort_col, top_n=9):
         top_df = df[top.index.to_list]
         
         other = df.loc[:, ~df.columns.isin(top.index)].sum(axis=1)
-        other_df = other.to_frame('Other')
+        other_df = other.to_frame('other')
 
         combined = pd.merge(top_df, other_df, left_index=True, right_index=True, how='inner')
         return combined
@@ -650,7 +664,7 @@ def top_ten_with_others(df, rank_col, sort_col, top_n=9):
         other = df.sort_values(by=rank_col, ascending=False).iloc[top_n:][rank_col].sum()
 
         # Create a DataFrame for the "Other" group
-        other_df = pd.DataFrame({sort_col: ["Other"], rank_col: [other]})
+        other_df = pd.DataFrame({sort_col: ["other"], rank_col: [other]})
 
         # Combine the top shows and the "Other" group
         combined_df = pd.concat([top_df, other_df], ignore_index=False)
@@ -787,46 +801,86 @@ def top_by_col(df, sort_col, sum_col, num=10, latest=True):
 
     return filtered_df
 
+# def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
+#     # Step 1: Group by 'make' and calculate the sum of 'mints_per_week'
+#     if latest==True:
+#         recent = df.groupby(sort_col).tail(1).sort_values(by=sum_col,ascending=False).head(num)[sort_col].values.tolist()
+#         filtered_df = df[df[sort_col].isin(recent)]
+
+#         other = df[~df[sort_col].isin(recent)]
+#         other_values = other.groupby(sort_col)[sum_col].sum()
+
+#         other_df = pd.DataFrame({
+#         sort_col: [f'other'] * len(other_values),
+#         sum_col: other_values.values
+#         })
+
+#         combined = pd.concat([filtered_df,other_df], ignore_index=False)
+#         print(F'combined: {combined}')
+#         combined.sort_index(inplace=True)
+#     else:
+#         top = df.groupby(sort_col)[sum_col].sum()
+
+#         # Step 2: Sort the makes by the sum of 'mints_per_week' in descending order and keep the top 10
+#         top_10 = top.nlargest(num).index
+
+#         # Step 3: Filter the original DataFrame to keep only rows with the top 10 makes
+#         filtered_df = df[df[sort_col].isin(top_10)]
+
+#         other = df[~df[sort_col].isin(recent)]
+#         other_values = other.groupby(sort_col)[sum_col].sum()
+
+#         other_df = pd.DataFrame({
+#         sort_col: [f'other'] * len(other_values),
+#         sum_col: other_values.values
+#         })
+
+#         combined = pd.concat([filtered_df,other_df], ignore_index=True)
+#         combined.sort_index(inplace=True)
+
+#         # Optionally, reset the index
+#         # filtered_df = filtered_df.reset_index()
+
+#     print(f'combined: {combined}')
+
+#     # combined = combined.groupbby([combined.index,sort_col])[[sum_col]].sum().reset_index(drop=True)
+
+#     # combined.drop_duplicates(inplace=True)
+
+#     return combined
+
 def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
+    print(F'latest: {latest}')
     # Step 1: Group by 'make' and calculate the sum of 'mints_per_week'
     if latest==True:
         recent = df.groupby(sort_col).tail(1).sort_values(by=sum_col,ascending=False).head(num)[sort_col].values.tolist()
         filtered_df = df[df[sort_col].isin(recent)]
 
-        other = df[~df[sort_col].isin(recent)]
-        other_values = other.groupby(sort_col)[sum_col].sum()
+        other = df[~df[sort_col].isin(recent)][[sum_col]].drop_duplicates()
+        other_df = other.groupby(other.index)[[sum_col]].sum()
 
-        other_df = pd.DataFrame({
-        sort_col: [f'Other'] * len(other_values),
-        sum_col: other_values.values
-        })
+        other_df[f'{sort_col}'] = 'other'
 
         combined = pd.concat([filtered_df,other_df], ignore_index=False)
+
         combined.sort_index(inplace=True)
     else:
-        top = df.groupby(sort_col)[sum_col].sum()
-
-        # Step 2: Sort the makes by the sum of 'mints_per_week' in descending order and keep the top 10
-        top_10 = top.nlargest(num).index
+        top = df.groupby(sort_col)[[sum_col]].sum().sort_values(by=sum_col,ascending=False).head(num).index
 
         # Step 3: Filter the original DataFrame to keep only rows with the top 10 makes
-        filtered_df = df[df[sort_col].isin(top_10)]
+        filtered_df = df[df[sort_col].isin(top)]
 
-        other = df[~df[sort_col].isin(recent)]
-        other_values = other.groupby(sort_col)[sum_col].sum()
+        # other = df[~df[sort_col].isin(recent)]
+        others = df[~df[sort_col].isin(top)][[sum_col]].drop_duplicates()
+        others_values = others.groupby(others.index)[[sum_col]].sum()
 
-        other_df = pd.DataFrame({
-        sort_col: [f'Other'] * len(other_values),
-        sum_col: other_values.values
-        })
+        others_values[f'{sort_col}'] = 'other'
 
-        combined = pd.concat([filtered_df,other_df], ignore_index=True)
-        combined.sort_index(inplace=True)
+        filtered_df = filtered_df[[sort_col,sum_col]]
 
-        # Optionally, reset the index
-        # filtered_df = filtered_df.reset_index()
+        combined = pd.concat([filtered_df,others_values]).sort_index().drop_duplicates()
 
-    # combined.drop_duplicates(inplace=True)
+    print(f'combined: {combined}')
 
     return combined
 
@@ -841,7 +895,7 @@ def top_other_ts_by_col(df,num_col, sort_col, topn=9):
     # other_num = len(other.columns)
     other_values = other.groupby(other.index)[num_col].sum()
     other_df = pd.DataFrame({
-        sort_col: [f'Other'] * len(other_values),
+        sort_col: [f'other'] * len(other_values),
         num_col: other_values.values
     }, index=other_values.index)
 
@@ -850,17 +904,17 @@ def top_other_ts_by_col(df,num_col, sort_col, topn=9):
 
     return combined
 
-def top_other_ts_by_columns(df, topn=9, num_other = False):
-    list = rank_by_columns(df)
+def top_other_ts_by_columns(df, topn=9, cumulative_sort=False, num_other = False):
+    list = rank_by_columns(df,cumulative_sort)
     print(f'top {topn} cols: {list[0:topn]}')
     other_cols = [col for col in df.columns if col not in(list[0:topn])]
     print(f'other cols: {other_cols}')
     top = df[list[0:topn]]
     other_df = df[other_cols]
-    other_df = other_df.sum(axis=1).to_frame('Other')
+    other_df = other_df.sum(axis=1).to_frame('other')
     combined = pd.merge(top,other_df,left_index=True, right_index=True, how='inner')
     if num_other == True:
-        combined.rename(columns={'Other':f'Others ({len(other_cols)})'},inplace=True)
+        combined.rename(columns={'other':f'others ({len(other_cols)})'},inplace=True)
 
     return combined
 
@@ -968,8 +1022,6 @@ def cleaning(df, cols_to_plot, bar_col, line_col, groupby, num_col, y1_list=None
     print("Cleaned num_col:", num_col_cleaned)
 
     return df, cols_to_plot, bar_col, line_col, y1_list, y2_list, groupby_cleaned, num_col_cleaned
-
-
 
 def cleaning_values(df):
     for col in df.columns:

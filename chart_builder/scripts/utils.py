@@ -1117,7 +1117,7 @@ def get_files(submission):
 def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x=0.05,y=1.18),
          save=True,file_type='svg',clean_columns=False, capwords=None, keep_top_n = False, other=False, topn=None,
          show=True,show_index_and_cols=True,clean_values=False,clean_words=None,dt_index=True,add_the_date=True,groupby=False,groupbyHow='sum',
-         date=None,dashed_line=False,annotation_text=None,axis='y1'):
+         date=None,dash_date=None,dashed_line=False,annotation_text=None,axis='y1'):
     
     print(f'save:{save}')
     
@@ -1147,7 +1147,7 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
         fig.add_date(date=date,x=date_xy['x'],y=date_xy['y'],dt_index=dt_index)
 
     if dashed_line:
-        fig.add_dashed_line(date=date,annotation_text=annotation_text)
+        fig.add_dashed_line(date=dash_date,annotation_text=annotation_text)
 
     if show == True:
         fig.show_fig()
