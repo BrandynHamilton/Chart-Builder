@@ -84,45 +84,42 @@ def round_up_to_05(x):
 
 def generate_ticks_dynamic(df, plot_width=800, min_tick_spacing=125):
     """
-    Dynamically generate x-axis ticks for even spacing and include the last tick.
+    Generate evenly spaced time-based ticks for datetime index.
 
     Parameters:
         df (pd.DataFrame): DataFrame with datetime index.
-        plot_width (int): Width of the plot in pixels (default 800).
-        min_tick_spacing (int): Minimum pixel distance between ticks (default 80).
+        plot_width (int): Width of the plot in pixels.
+        min_tick_spacing (int): Minimum pixel spacing between ticks.
 
     Returns:
-        x_ticks (list): List of tick positions.
-        x_tick_labels (list): Corresponding tick labels as strings.
+        List of datetime ticks, List of formatted labels.
     """
-    if pd.api.types.is_datetime64_any_dtype(df.index):
-        total_periods = len(df.index)
-        start = 0
-        end = total_periods - 1
-        
-        # Dynamically calculate the maximum number of ticks based on plot width
-        max_ticks = max(2, plot_width // min_tick_spacing)  # Ensure at least 2 ticks
-
-        # Limit the number of ticks to the smaller of max_ticks or total data points
-        num_ticks = min(max_ticks, total_periods)
-        
-        # Generate evenly spaced tick indices
-        tick_indices = np.linspace(start, end, num_ticks, dtype=int).tolist()
-        
-        # Ensure the last tick is included
-        if end not in tick_indices:
-            tick_indices.append(end)
-        
-        # Generate tick values and labels
-        x_ticks = [df.index[i] for i in sorted(set(tick_indices))]
-        x_tick_labels = [tick.strftime('%Y-%m-%d') for tick in x_ticks]
-
-        return x_ticks, x_tick_labels
-    else:
+    if not pd.api.types.is_datetime64_any_dtype(df.index):
         return None, None
 
+    index = df.index.sort_values().unique()
+    total_points = len(index)
+
+    # Max number of ticks that can fit in the plot
+    max_ticks = max(2, plot_width // min_tick_spacing)
+
+    # Calculate step to downsample index
+    step = max(1, total_points // (max_ticks - 1))
+
+    # Select evenly spaced tick indices
+    tick_indices = list(range(0, total_points, step))
+
+    # Ensure the last index is included
+    if tick_indices[-1] != total_points - 1:
+        tick_indices.append(total_points - 1)
+
+    x_ticks = [index[i] for i in tick_indices]
+    x_tick_labels = [tick.strftime('%Y-%m-%d') for tick in x_ticks]
+
+    return x_ticks, x_tick_labels
+
 def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options=None, mode='lines', area=False, annotations=True, tickprefix=dict(y1=None,y2=None), 
-                     ticksuffix=dict(y1=None,y2=None), remove_zero=False, custom_ticks=False,
+                     ticksuffix=dict(y1=None,y2=None), remove_zero=False, custom_ticks=False,ytickvals=None, yticktext=None,
                       colors=combined_colors, font_size=18, axes_data=dict(y1=None,y2=None), 
                      bgcolor='rgba(0,0,0,0)', legend_orientation='h', tickangle=None, show_legend=False,
                      sort_list=True, dtick=None, max_annotation=False, tickformat=None, tick0=None,
@@ -137,6 +134,9 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
     print(f'tick0 in func: {tick0}')
     print(F'sort_list: {sort_list}')
+
+    print(F'ytickvals: {ytickvals}')
+    print(F'yticktext: {yticktext}')
 
     space_buffer = " " * legend_background['buffer']
 
@@ -288,8 +288,8 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
             arrowhead=2,
             arrowsize=1.5,
             arrowwidth=1.5,
-            ax=25,
-            ay=-85,
+            ax=-75,
+            ay=-50,
             font=dict(size=text_font_size, family=font_family, color=font_color),
             xref='x',
             yref='y',
@@ -529,13 +529,17 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
             ticksuffix=ticksuffix.get("y1", ""),
             tickprefix=tickprefix.get("y1", ""),
             tickformat=tickformat.get("y1", ""),
+            # tickvals=ytickvals,
+            # ticktext=yticktext
         ),
         yaxis2=dict(
             tickfont=dict(size=font_size, family=font_family, color=axes_font_colors.get("y2", font_color)),
             overlaying='y',
             ticksuffix=ticksuffix.get("y2", ""),
             tickprefix=tickprefix.get("y2", ""),
-            tickformat=tickformat.get("y2", "")
+            tickformat=tickformat.get("y2", ""),
+            # tickvals=ytickvals,
+            # ticktext=yticktext
         )
     )
 
@@ -553,7 +557,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
                     bgcolor='rgba(0,0,0,0)', legend_orientation='h', tickangle=None, show_legend=False,
                     dtick=None, max_annotation=False, tick0=None, traceorder='normal',
                     legend_placement=dict(x=0.01, y=1.1), margin=dict(l=0, r=0, t=0, b=0), legend_font_size=16, decimals=True,
-                    custom_tickval=None, custom_ticktext=None, xtick_prefix=None,
+                    custom_tickval=None, custom_ticktext=None, xtick_prefix=None,connectgaps=True,
                     cumulative_sort=False, decimal_places=1, barmode='stack', text=False,
                     text_freq=1, text_font_size=12, dimensions=dict(width=730, height=400), rangebreaks=None, text_position='outside',
                     axes_data=dict(y1=None, y2=None), tickformat=dict(x=None, y1=None, y2=None), axes_titles=dict(y1=None, y2=None),
@@ -936,8 +940,8 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
 
 def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines', area=False, tickprefix=dict(y1=None, y2=None), ticksuffix=dict(y1=None, y2=None),
                  colors=combined_colors, font_size=18, y2_axis=True, tickangle=None, remove_zero=False, custom_ticks=False,
-                 bgcolor='rgba(0,0,0,0)', legend_orientation='v', dtick=None, tick0=None,line_width=4, marker_size=10,
-                 traceorder='normal', line_color='#2E2E2E', legend_placement=dict(x=0.01, y=1.1),text_font_size=14,
+                 bgcolor='rgba(0,0,0,0)', legend_orientation='v', dtick=None, tick0=None,line_width=4, marker_size=10,cumulative_sort=True,
+                 traceorder='normal', line_color='#2E2E2E', legend_placement=dict(x=0.01, y=1.1),text_font_size=14,text=False, text_freq=1, text_position='outside',
                  bar_color=None, fill=None, margin=dict(l=0, r=0, t=0, b=0), legend_font_size=16, decimals=True, decimal_places=1,
                  xtitle=None, barmode='stack', axes_title=dict(y1=None, y2=None), dimensions=dict(width=730, height=400), auto_title=True,min_tick_spacing=125,
                  tickformat=dict(x=None, y1=".2s", y2=".2s"),font_family=None,font_color='black',file_type='svg',directory='../img',custom_annotation=[],buffer=None,
@@ -954,9 +958,16 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
     # Define a small buffer for x-axis range extension (e.g., 1 day on each side)
     if buffer != None:
 
-        x_buffer = pd.Timedelta(days=buffer)
-        x_range_start = df.index.min() - x_buffer
-        x_range_end = df.index.max() + x_buffer
+        if isinstance(df.index, pd.DatetimeIndex):
+            # If the index is a datetime index, use timedelta
+            x_buffer = pd.Timedelta(days=buffer)
+            x_range_start = df.index.min() - x_buffer
+            x_range_end = df.index.max() + x_buffer
+        else:
+            # If the index is not datetime, use a numeric buffer
+            x_buffer = buffer
+            x_range_start = df.index.min() - x_buffer
+            x_range_end = df.index.max() + x_buffer
     
     else:
         x_range_start = df.index.min() 
@@ -1003,11 +1014,24 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
     if fill == None:
         # Add bar traces without specifying `width` to maintain default spacing
         for col in bar_col:
+            if text and text_freq:
+                # Create a list to hold text values based on the text frequency
+                text_values = [
+                    f'{tickprefix["y1"] if tickprefix["y1"] else ""}'  # Add tickprefix
+                    f'{clean_values(df[col].iloc[i], decimal_places=decimal_places, decimals=decimals)}'  # Use .iloc for positional indexing
+                    f'{ticksuffix["y1"] if ticksuffix["y1"] else ""}'  # Add ticksuffix
+                    if i % text_freq == 0 else None for i in range(len(df))
+                ]
+                    # Automatically adjust text position (inside/outside)
+            else:
+                text_values = ""
+
             color = next(filtered_iter, colors[1])  # Get the next color, fallback to first color if exhausted
             print(f'color for bar{color}')
             fig.add_trace(go.Bar(
                 x=df.index,
                 y=df[col],
+                text=text_values,  # Use the filtered text values based on frequency
                 name=f'{col} ({tickprefix["y1"] if tickprefix["y1"] else ""}{clean_values(df[col].iloc[-1], decimals=decimals, decimal_places=decimal_places)}{ticksuffix["y1"] if ticksuffix["y1"] else ""}){space_buffer}',
                 marker=dict(color=color if bar_color == None else bar_color),
                 showlegend=show_legend
@@ -1170,8 +1194,8 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
 
     return fig
 
-def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines', col=None, sort_col=None,
-                      sort_list=True, area=False, tickprefix=None, ticksuffix=None, font_size=18,
+def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines', col=None, sort_col=None,user_sort_list=None, user_color_map=None,
+                      sort_list=True, area=False, tickprefix=None, ticksuffix=None, font_size=18,y_log=False,
                       bgcolor='rgba(0,0,0,0)', legend_orientation='h', tickangle=None,axes_titles=dict(y1=None, y2=None),
                       traceorder='normal', legend_placement=dict(x=0.01, y=1.1), margin=dict(l=0, r=0, t=0, b=0),
                       legend_font_size=14, tickformat=dict(x="%b %y", y1=".2s", y2=".2s"), dtick=None, decimals=True, decimal_places=1,
@@ -1202,10 +1226,15 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
     x_range_start = df.index.min() 
     x_range_end = df.index.max() 
 
-    sort_list, color_map = rank_by_col(
-        df=df, sort_col=sort_col, num_col=col, descending=descending,
-        cumulative_sort=cumulative_sort, colors=colors
-    )
+    if not user_sort_list and not user_color_map:
+
+        sort_list, color_map = rank_by_col(
+            df=df, sort_col=sort_col, num_col=col, descending=descending,
+            cumulative_sort=cumulative_sort, colors=colors
+        )
+    else:
+        sort_list = user_sort_list
+        color_map = user_color_map
 
     print(f'sort_list: {sort_list}')
     print(f'color_map: {color_map}')
@@ -1213,6 +1242,13 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
     # Plot using latest value sort and cumulative color mapping
     for idx, i in enumerate(sort_list):
         i_df = df[df[sort_col] == i]
+        x=i_df.index,
+        y=i_df[col],
+        print(f'i: {i}')
+        print(f'col: {col}')
+        print(f'idx: {idx}')
+        print(f'i_df {i_df}')
+        print(f'x, y: {x, y}')
         # Use the cumulative color map if available; otherwise, fallback to index-based colors
         color = color_map.get(i, colors[idx % len(colors)])
 
@@ -1315,6 +1351,8 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
     )
 
     print(f'x_ticks: {x_ticks}')
+    if y_log:
+        fig.update_yaxes(type='log', secondary_y=False)
     
     fig.update_layout(
         xaxis=dict(
@@ -1326,6 +1364,7 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
             dtick=dtick,
             tick0=tick0
         ),
+
         yaxis=dict(
             tickvals=ticksy if custom_ticks else None,
             ticksuffix=ticksuffix,

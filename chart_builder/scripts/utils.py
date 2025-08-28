@@ -559,8 +559,10 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, c
     combined_df = pd.concat([last_day_records.reset_index(drop=True), missing_df.reset_index(drop=True)])
     combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
 
+    print(f"Combined DataFrame for ranking: {combined_df}")
+
     # Generate the sorted list for plotting
-    latest_sorted_list = combined_df.reset_index()[sort_col].values.tolist()
+    latest_sorted_list = combined_df.reset_index()[sort_col].tolist()
 
     # Generate the color map based on cumulative or latest sort
     if colors:
