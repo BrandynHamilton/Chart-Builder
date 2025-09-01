@@ -3,6 +3,10 @@
 - This library builds off Plotly and automates portions of data cleaning and charting for users.
 - A user only inputs specified parameters such as chart type and columns to chart, enabling quick charting of complex data structures.
 
+# Run Documentation Server
+
+Run `mkdocs serve` in the root directory for a documentation server which explains the publicly exposed classes and functions.
+
 # Visualization Pipeline Parameters
 
 This document explains the parameters of the `visualization_pipeline` class, grouped by category.

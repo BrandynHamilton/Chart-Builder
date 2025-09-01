@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chart-builder"
+version = "0.3.2"
+description = "A library for building customizable charts in Python"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+
+authors = [
+    { name = "Brandyn Hamilton", email = "brandynham1120@gmail.com"}
+]
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "plotly",
+    "kaleido>=0.1.0",
+    "svgwrite",
+    "python-dotenv",
+    "colorcet",
+    "matplotlib",
+    "nbformat",
+    "dune-client>=0.3.0",
+]
+
+[project.optional-dependencies]
+dev = ["build", "twine", "mkdocs"]
+
+[tool.setuptools.packages.find]
+include = ["chart_builder", "chart_builder.*"]
+

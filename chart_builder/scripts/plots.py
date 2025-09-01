@@ -9,8 +9,8 @@ import math
 
 # sys.path.append(os.path.join(current_dir, 'pipeline', 'scripts'))
 
-print("Current working directory:", os.getcwd())
-print("Current directory:", current_dir)
+# print("Current working directory:", os.getcwd())
+# print("Current directory:", current_dir)
 
 from chart_builder.scripts.utils import dynamic_parameters, top_other_by_col_bubble, top_by_col_bubble, colors, clean_values, clean_values_dollars, ranked_cleaning, to_percentage, rank_by_col, rank_by_columns, normalize_to_percent,calculate_marker_size
 
@@ -132,11 +132,11 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
     "custom_annotation is an array of dates we want annotations for value"
 
-    print(f'tick0 in func: {tick0}')
-    print(F'sort_list: {sort_list}')
+    # print(f'tick0 in func: {tick0}')
+    # print(F'sort_list: {sort_list}')
 
-    print(F'ytickvals: {ytickvals}')
-    print(F'yticktext: {yticktext}')
+    # print(F'ytickvals: {ytickvals}')
+    # print(F'yticktext: {yticktext}')
 
     space_buffer = " " * legend_background['buffer']
 
@@ -153,8 +153,8 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
         # Determine plotting order based on the latest value
         plot_order = rank_by_columns(df, cumulative=False, descending=descending)
 
-        print(f"Color order (cumulative): {color_order}")
-        print(f"Plot order (latest value): {plot_order}")
+        # print(f"Color order (cumulative): {color_order}")
+        # print(f"Plot order (latest value): {plot_order}")
 
         color_map = {col: colors[idx % len(colors)] for idx, col in enumerate(color_order)}
         columns_to_plot = plot_order
@@ -162,7 +162,7 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
     y1_lineto_show = None
     y2_lineto_show = None
 
-    print(f'axes_titles at beginning: {axes_titles}')
+    # print(f'axes_titles at beginning: {axes_titles}')
 
     if buffer != None:
         if datetime_tick:
@@ -180,15 +180,15 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
         x_range_start = df.index.min() 
         x_range_end = df.index.max()   
 
-    print(f'cumulative_sort: {cumulative_sort}')
+    # print(f'cumulative_sort: {cumulative_sort}')
   
     # Sort columns by descending or ascending
     # sort_list = rank_by_columns(df=df, cumulative=cumulative_sort, descending=descending)
     
 
     # Print for debugging
-    print(f"descending: {descending}")
-    print(f"columns to plot: {columns_to_plot}")
+    # print(f"descending: {descending}")
+    # print(f"columns to plot: {columns_to_plot}")
 
     
     if axes_font_colors == 'auto' or axes_font_colors is None:
@@ -199,17 +199,17 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
     y1_lineto_show = df[axes_data['y1'][0]].name if auto_title and not axes_titles['y1'] else axes_titles['y1']
     y2_lineto_show = df[axes_data['y2'][0]].name if auto_title and not axes_titles['y2'] else axes_titles['y2']
     
-    print(f'axes_font_colors: {axes_font_colors}')
+    # print(f'axes_font_colors: {axes_font_colors}')
 
     # Loop through the y1 columns, applying sorted order
     for idx, y1_col in enumerate(columns_to_plot):
-        print(f'idx: {idx} y1_col: {y1_col}')
+        # print(f'idx: {idx} y1_col: {y1_col}')
         if y1_col not in axes_data['y1']:
             continue  # Skip if y1_col is not in the sorted columns
 
-        print(f'axes_titles: {axes_titles}')
+        # print(f'axes_titles: {axes_titles}')
         
-        print(f'y1_lineto_show: {y1_lineto_show}')
+        # print(f'y1_lineto_show: {y1_lineto_show}')
         
         # Assign colors based on position: reverse for ascending
         # print(f'colors: {colors}')
@@ -221,9 +221,9 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
         # if 'y1' not in axes_font_colors:
         #     axes_font_colors['y1'] = column_color
 
-        print(f'axes_font_colors: {axes_font_colors}')
+        # print(f'axes_font_colors: {axes_font_colors}')
 
-        print(f'latest val: {df[y1_col].iloc[-1]}')
+        # print(f'latest val: {df[y1_col].iloc[-1]}')
 
         if text and text_freq:
             # Create a list to hold text values based on the text frequency
@@ -237,13 +237,13 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
         else:
             text_values = ""
 
-        print(f'y1_col values:{df[y1_col]} ')
+        # print(f'y1_col values:{df[y1_col]} ')
 
-        print(f'color_map: {color_map}')
+        # print(f'color_map: {color_map}')
 
         color = color_map.get(y1_col, colors[idx % len(colors)])
 
-        print(f'Processing y1 column: {y1_col} with color: {color}')  # Debugging info
+        # print(f'Processing y1 column: {y1_col} with color: {color}')  # Debugging info
 
         fig.add_trace(go.Scatter(
             x=df.index,
@@ -364,18 +364,18 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
     # Check for y2 columns, applying sorted order as well
     if axes_data['y2']:
-        print(f'axes_data y2: {axes_data["y2"]}')
-        print(f'columns_to_plot: {columns_to_plot}')
+        # print(f'axes_data y2: {axes_data["y2"]}')
+        # print(f'columns_to_plot: {columns_to_plot}')
         for idx, y2_col in enumerate(columns_to_plot):
             if y2_col not in axes_data["y2"]:
-                print(f'Skipping y2 column: {y2_col} (not in columns to plot)')
+                # print(f'Skipping y2 column: {y2_col} (not in columns to plot)')
                 continue
             if y2_col not in columns_to_plot:
                 continue  # Skip if y2_col is not in the sorted columns
 
-            print(f'idx: {idx} y2_col: {y2_col}')
+            # print(f'idx: {idx} y2_col: {y2_col}')
 
-            print(f'line to show 2: {y2_lineto_show}')
+            # print(f'line to show 2: {y2_lineto_show}')
 
             # Assign colors based on position: reverse for ascending
             if descending:
@@ -388,9 +388,9 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
             color = color_map.get(y2_col, colors[idx % len(colors)])
           
-            print(f'Processing y2 column: {y2_col} with color: {color}') 
+            # print(f'Processing y2 column: {y2_col} with color: {color}') 
             
-            print(f'y2_col values:{df[y2_col]} ') # Debugging info
+            # print(f'y2_col values:{df[y2_col]} ') # Debugging info
 
             fig.add_trace(go.Scatter(
                 x=df.index,
@@ -405,14 +405,14 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
                 fill=fill
             ), secondary_y=True)
 
-    print(f'axes_font_colors: {axes_font_colors}')
+    # print(f'axes_font_colors: {axes_font_colors}')
 
     if custom_ticks:
         y_min = df[axes_data["y1"]].min().min() if df[axes_data["y1"]].min().min() < 0 else 0
         y_max = df[axes_data["y1"]].max().max()
 
-        print(f'y_min: {y_min}')
-        print(f'y_max: {y_max}')
+        # print(f'y_min: {y_min}')
+        # print(f'y_max: {y_max}')
         
         ticksy = list(np.linspace(y_min, y_max, num=ytick_num, endpoint=True))
 
@@ -430,9 +430,9 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
     else:
         ticksy = None    
     
-    print(f'ticksy: {ticksy}')
+    # print(f'ticksy: {ticksy}')
 
-    print(f'[x_range_start, x_range_end]: {[x_range_start, x_range_end]}')
+    # print(f'[x_range_start, x_range_end]: {[x_range_start, x_range_end]}')
 
     # if pd.api.types.is_datetime64_any_dtype(df.index):
     #     # import pdb; pdb.set_trace()
@@ -477,7 +477,7 @@ def simple_line_plot(df, title, axes_titles=dict(y1=None, y2=None),color_options
 
     x_ticks, x_tick_labels = generate_ticks_dynamic(df,dimensions['width'],min_tick_spacing)
 
-    print(f'legend_orientation: {legend_orientation}')
+    # print(f'legend_orientation: {legend_orientation}')
 
     fig.update_layout(
         legend=dict(
@@ -564,8 +564,8 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
                     tickprefix=dict(y1=None, y2=None), ticksuffix=dict(y1=None, y2=None), descending=True,datetime_tick=True,font_family=None,font_color='black',file_type='svg',min_tick_spacing=125,
                     directory='../img',custom_annotation=[],buffer=None,ytick_num=6, auto_title=True,legend_background=dict(bgcolor='white',bordercolor='black',
                                                                                                                               borderwidth=1, itemsizing='constant',buffer = 5)):
-    print(f'testing')
-    print(f'axes_data:{axes_data}')
+    # print(f'testing')
+    # print(f'axes_data:{axes_data}')
     if bgcolor == 'default':
         bgcolor = 'rgba(0,0,0,0)'
 
@@ -575,7 +575,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
 
     y1_lineto_show = None
     y2_lineto_show = None
-    print(f'sort_list: {sort_list}')
+    # print(f'sort_list: {sort_list}')
 
 
 
@@ -601,8 +601,8 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
         color_order = rank_by_columns(df, cumulative=cumulative_sort, descending=True)  # Rank largest to smallest for consistent colors
         plot_order = rank_by_columns(df, cumulative=cumulative_sort, descending=descending)  # Plot in user-defined order
 
-        print(f"Color order (largest first for color): {color_order}")
-        print(f"Plot order (user-defined): {plot_order}")
+        # print(f"Color order (largest first for color): {color_order}")
+        # print(f"Plot order (user-defined): {plot_order}")
 
         # Assign colors based on the ranked order (largest series gets the first color)
         color_map = {col: colors[color_order.get_loc(col) % len(colors)] for col in plot_order}
@@ -611,9 +611,9 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
         columns_to_plot = list(plot_order)
 
     # Print for debugging
-    print(f"descending: {descending}")
-    print(f"columns to plot: {columns_to_plot}")
-    print(f'tick0: {tick0}')
+    # print(f"descending: {descending}")
+    # print(f"columns to plot: {columns_to_plot}")
+    # print(f'tick0: {tick0}')
 
     # tick0 = df.index.min()
 
@@ -623,12 +623,12 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
     #     # Reverse the colors for the plotting order
     #     reversed_colors = [color_map[col] for col in reversed(columns_to_plot)]
     #     color_map = {col: reversed_colors[idx] for idx, col in enumerate(columns_to_plot)}
-    print(f'reversed color map: {color_map}')
-    print(f'axes_titles: {axes_titles}')
+    # print(f'reversed color map: {color_map}')
+    # print(f'axes_titles: {axes_titles}')
     
     # Assign colors based on position (last-ranked gets the first color in reversed list)
     for idx, y1_col in enumerate(columns_to_plot):
-        print(f'idx: {idx}, y: {y1_col}')
+        # print(f'idx: {idx}, y: {y1_col}')
         if y1_col not in axes_data["y1"]:
             continue  # Skip if the column isn't in the sorted list
 
@@ -637,8 +637,8 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
         elif auto_title == False:
             y1_lineto_show = axes_titles["y1"]
 
-        print(F'auto_title: {auto_title}')
-        print(F'y1_lineto_show: {y1_lineto_show}')
+        # print(F'auto_title: {auto_title}')
+        # print(F'y1_lineto_show: {y1_lineto_show}')
         # Assign colors based on position: reverse for ascending
             
         if text and text_freq:
@@ -653,12 +653,12 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
         else:
             text_values = ""
 
-        print(f'index: {df.index}')
-        print(f'vals: {df[y1_col]}')
+        # print(f'index: {df.index}')
+        # print(f'vals: {df[y1_col]}')
 
         color = color_map[y1_col]
 
-        print(f'processing {y1_col} with color {color}')
+        # print(f'processing {y1_col} with color {color}')
       
         # Add the trace for each y1 column with the color assignment
         fig.add_trace(go.Bar(
@@ -676,7 +676,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
             )
         ), secondary_y=False)
 
-        print(f'datetime_tick: {datetime_tick}')
+        # print(f'datetime_tick: {datetime_tick}')
 
         # if pd.api.types.is_datetime64_any_dtype(df.index):
         #     datetime_tick = True
@@ -783,7 +783,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
     if axes_data['y2']:
         for idx, y2_col in enumerate(columns_to_plot):
             if y2_col not in axes_data["y2"]:
-                print(f'Skipping y2 column: {y2_col} (not in columns to plot)')
+                # print(f'Skipping y2 column: {y2_col} (not in columns to plot)')
                 continue
 
             if auto_title == True:
@@ -794,7 +794,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
             # Determine color based on sorted order for y2
             sorted_index = columns_to_plot.index(y2_col)
             line_color = colors[(sorted_index + len(axes_data["y1"])) % len(colors)]
-            print(f'Processing y2 column: {y2_col} with color: {line_color}')
+            # print(f'Processing y2 column: {y2_col} with color: {line_color}')
             
             fig.add_trace(go.Bar(
                 x=df.index,
@@ -812,7 +812,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
         # Generate tick values using np.linspace with rounded bounds
         ticksy = list(np.linspace(y_min, y_max, num=ytick_num, endpoint=True))
         ticksy = [round_up_to_05(tick) for tick in ticksy]
-        print(f'ticksy: {ticksy}')
+        # print(f'ticksy: {ticksy}')
         if remove_zero:
             ticksy = [tick for tick in ticksy if tick != 0]
         
@@ -820,7 +820,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
             f"{tickprefix['y1'] if tickprefix['y1'] else ''}{clean_values(tick, decimal_places=0, decimals=False)}{ticksuffix['y1'] if ticksuffix['y1'] else ''}"
             for tick in ticksy
         ]
-        print(f'formatted_ticks: {formatted_ticks}')
+        # print(f'formatted_ticks: {formatted_ticks}')
     else:
         ticksy = None
 
@@ -866,7 +866,7 @@ def simple_bar_plot(df, title, save=False, color_options=None, annotations=True,
 
     x_ticks, x_tick_labels = generate_ticks_dynamic(df,dimensions['width'],min_tick_spacing)
 
-    print(f'x_ticks: {x_ticks}')
+    # print(f'x_ticks: {x_ticks}')
 
     fig.update_layout(
         barmode=barmode,
@@ -948,7 +948,7 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
                  ytick_num=6,axes_font_colors=dict(y1='black',y2='black'),show_legend=True, legend_background=dict(bgcolor='white',bordercolor='black',
                                                                                                                               borderwidth=1, itemsizing='constant',buffer = 5),
                                                                                                                               autosize=True):
-    print(f'line_width: {line_width}')
+    # print(f'line_width: {line_width}')
     if bgcolor == 'default':
         bgcolor = 'rgba(0,0,0,0)'
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -973,7 +973,7 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
         x_range_start = df.index.min() 
         x_range_end = df.index.max() 
 
-    print(f'axes_font_colors param: {axes_font_colors}')
+    # print(f'axes_font_colors param: {axes_font_colors}')
 
     if axes_font_colors == 'auto':
         axes_font_colors = {'y1': colors[0], 'y2': line_color}
@@ -989,17 +989,17 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
     filtered_colors = [color for color in colors if color not in [line_col, 'black']]
     filtered_iter = iter(filtered_colors)
 
-    print(f'axes titles: {axes_title}')
+    # print(f'axes titles: {axes_title}')
     
     color_iter = iter(colors)  # Create an iterator for the colors
     rev_color_iter = reversed(colors[:-1])
-    print(f'reversed color iter: {rev_color_iter}')
-    print(f'line_width at line col: {line_width}')
+    # print(f'reversed color iter: {rev_color_iter}')
+    # print(f'line_width at line col: {line_width}')
 
     for i, col in enumerate(line_col):
         color = line_color if i == 0 else next(rev_color_iter, "black")
-        print(f'color for line{color}')
-        print(f'line col: {df[col]}')
+        # print(f'color for line{color}')
+        # print(f'line col: {df[col]}')
         fig.add_trace(go.Scatter(
             x=df.index,
             y=df[col],
@@ -1027,7 +1027,7 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
                 text_values = ""
 
             color = next(filtered_iter, colors[1])  # Get the next color, fallback to first color if exhausted
-            print(f'color for bar{color}')
+            # print(f'color for bar{color}')
             fig.add_trace(go.Bar(
                 x=df.index,
                 y=df[col],
@@ -1165,8 +1165,8 @@ def line_and_bar(df, title, save=False, bar_col=None, line_col=None, mode='lines
         tick0=tick0
     )
 
-    print(f'axes_title["y1"]: {axes_title["y1"]}')
-    print(f'axes_font_colors["y1"]: {axes_font_colors["y1"]}')
+    # print(f'axes_title["y1"]: {axes_title["y1"]}')
+    # print(f'axes_font_colors["y1"]: {axes_font_colors["y1"]}')
     
     fig.update_yaxes(
         title_text=axes_title["y1"],
@@ -1217,7 +1217,7 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
 
     space_buffer = " " * legend_background['buffer']
 
-    print(f'tick0: {tick0}')
+    # print(f'tick0: {tick0}')
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     traces = []
@@ -1236,19 +1236,19 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
         sort_list = user_sort_list
         color_map = user_color_map
 
-    print(f'sort_list: {sort_list}')
-    print(f'color_map: {color_map}')
+    # print(f'sort_list: {sort_list}')
+    # print(f'color_map: {color_map}')
 
     # Plot using latest value sort and cumulative color mapping
     for idx, i in enumerate(sort_list):
         i_df = df[df[sort_col] == i]
         x=i_df.index,
         y=i_df[col],
-        print(f'i: {i}')
-        print(f'col: {col}')
-        print(f'idx: {idx}')
-        print(f'i_df {i_df}')
-        print(f'x, y: {x, y}')
+        # print(f'i: {i}')
+        # print(f'col: {col}')
+        # print(f'idx: {idx}')
+        # print(f'i_df {i_df}')
+        # print(f'x, y: {x, y}')
         # Use the cumulative color map if available; otherwise, fallback to index-based colors
         color = color_map.get(i, colors[idx % len(colors)])
 
@@ -1267,17 +1267,17 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
             showlegend=show_legend
         ))
 
-        print(f'idx: {idx}')
-        print(f'custom_annotation: {custom_annotation}')
+        # print(f'idx: {idx}')
+        # print(f'custom_annotation: {custom_annotation}')
 
         if idx == 0:
             if custom_annotation:
                 for date in custom_annotation:
-                    print(f'i_df index: {i_df}')
-                    print(f'custom_annotation: {date}')
+                    # print(f'i_df index: {i_df}')
+                    # print(f'custom_annotation: {date}')
                     if date in i_df.index:
                         y_value = i_df.loc[date, col]
-                        print(f'y_value: {y_value}')
+                        # print(f'y_value: {y_value}')
                         annotation_text = f'{date}: {tickprefix if tickprefix else ""}{clean_values(y_value, decimal_places=decimal_places, decimals=decimals)}{ticksuffix if ticksuffix else ""}'
 
                         fig.add_annotation(dict(
@@ -1350,7 +1350,7 @@ def sorted_multi_line(df, title, save=False, colors=combined_colors, mode='lines
         margin=margin
     )
 
-    print(f'x_ticks: {x_ticks}')
+    # print(f'x_ticks: {x_ticks}')
     if y_log:
         fig.update_yaxes(type='log', secondary_y=False)
     
@@ -1400,37 +1400,37 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
 
     primary_color = colors[0] if use_single_color else None
 
-    print(f'combined_colors: {combined_colors}')
-    print(f'primary_color: {primary_color}')
+    # print(f'combined_colors: {combined_colors}')
+    # print(f'primary_color: {primary_color}')
 
     traces = []
-    print(f'df sort order before ranked cleaning: {df[sort_col].unique()}')
+    # print(f'df sort order before ranked cleaning: {df[sort_col].unique()}')
 
     df, sort_list = ranked_cleaning(df, col, sort_col, descending=descending,use_sort_list=use_sort_list)
-    print(f'df: {df}')
+    # print(f'df: {df}')
 
-    print(f'Decimal Places: {decimal_places}')
+    # print(f'Decimal Places: {decimal_places}')
 
     # if use_sort_list:
     #     sort_list = sort_list
     # else:
     #     sort_list = df.columns
 
-    print(f'sort_list: {sort_list}')
+    # print(f'sort_list: {sort_list}')
 
     if to_reverse:
         sort_list = reversed(sort_list)
 
-    print(f'sort list: {sort_list}')
+    # print(f'sort list: {sort_list}')
     for idx, i in enumerate(sort_list):
         if showlegend:
-            print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
+            # print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
             name = f'{i} ({tickprefix if tickprefix else ""}{clean_values(df[df[sort_col] == i][col].iloc[-1], decimal_places=decimal_places, decimals=decimals)}{ticksuffix if ticksuffix else ""}){"                  "}' 
             text = None
             y = idx
         else:
             if show_text:
-                print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
+                # print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
                 name = None
                 # Add buffer (spaces) at the end of each formatted text value
                 text = df[df[sort_col] == i][col].apply(
@@ -1438,13 +1438,13 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
                 )
                 y = i
             else:
-                print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
+                # print(f'i: {i} \nidx: {idx} \nprefix: {ticksuffix}')
                 name = None
                 text = None
                 y = i
 
 
-        print(f'idx: {idx} i: {i}')
+        # print(f'idx: {idx} i: {i}')
 
         # Determine the color based on descending order
         if use_single_color:
@@ -1454,8 +1454,8 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
         else:
             color = combined_colors[len(sort_list) - idx - 1]  # Reverse order for ascending
 
-        print(f'use_single_color:{use_single_color}')
-        print(f'color: {color}')
+        # print(f'use_single_color:{use_single_color}')
+        # print(f'color: {color}')
 
         if orientation == 'v':  # Vertical orientation
             x = [i]  # Categorical value on the x-axis
@@ -1508,7 +1508,7 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
 
     index_length = len(df.index)
 
-    print(f'text: {show_text}')
+    # print(f'text: {show_text}')
 
     if orientation == 'v':
         xtickangle = tickangle
@@ -1541,7 +1541,7 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
         xtickangle = 0
         ytickangle = tickangle
         if not showlegend:
-            print(f'no legend, horizontal')
+            # print(f'no legend, horizontal')
             ytickprefix = None
             yticksuffix = None
             tickvals = None  # No specific tick values for y-axis
@@ -1557,7 +1557,7 @@ def ranked_bar_chart(df, title, save=False, colors=combined_colors, barmode='sta
                 xticktext = None
 
         else:
-            print(f'legend, horizontal')
+            # print(f'legend, horizontal')
             ytickprefix = None
             yticksuffix = None
             tickvals = list(range(index_length))  # No specific tick values for y-axis
@@ -1618,9 +1618,9 @@ def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sor
                                                                                                     borderwidth=1, itemsizing='constant',
                                                                                                     yanchor="top",xanchor="center",buffer = 5),
                                                                                                                               autosize=True):
-    print(f'cumulative_sort: {cumulative_sort}')
+    # print(f'cumulative_sort: {cumulative_sort}')
     
-    print(f'sorted_bar_legend_orientation: {legend_orientation}')
+    # print(f'sorted_bar_legend_orientation: {legend_orientation}')
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -1638,7 +1638,7 @@ def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sor
         x_range_start = df.index.min() 
         x_range_end = df.index.max() 
 
-    print(f'x_range_start:{x_range_start}')
+    # print(f'x_range_start:{x_range_start}')
 
     traces = []
 
@@ -1647,14 +1647,14 @@ def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sor
         cumulative_sort=cumulative_sort, colors=colors
     )
 
-    print(f'df columns: {df.columns}')
+    # print(f'df columns: {df.columns}')
 
-    print(f"sort_col: {sort_col}")
-    print(f"sort_list: {sort_list}")
-    print(f"df[sort_col]:\n{df[sort_col].unique()}")
+    # print(f"sort_col: {sort_col}")
+    # print(f"sort_list: {sort_list}")
+    # print(f"df[sort_col]:\n{df[sort_col].unique()}")
 
     missing_values = set(sort_list) - set(df[sort_col].unique())
-    print(f"Missing values in sort_list: {missing_values}")
+    # print(f"Missing values in sort_list: {missing_values}")
 
     # Iterate over sorted columns and assign colors accordingly
     for idx, i in enumerate(sort_list):
@@ -1680,9 +1680,9 @@ def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sor
         # else:
         #     column_color = combined_colors[len(sort_list) - idx - 1]  # Reverse order for ascending
 
-        print(f'i_df:{i_df}')
-        print(f'col:{col}')
-        print(f'text font size: {text_font_size}')
+        # print(f'i_df:{i_df}')
+        # print(f'col:{col}')
+        # print(f'text font size: {text_font_size}')
         traces.append(go.Bar(
             x=i_df.index if bar_orientation == 'v' else i_df[col],
             y=i_df[col] if bar_orientation == 'v' else i_df.index,
@@ -1782,7 +1782,7 @@ def sorted_bar_chart(df, title, save=False, colors=combined_colors,col=None, sor
     #     x_tick_labels = None
 
     x_ticks, x_tick_labels = generate_ticks_dynamic(df,dimensions['width'],min_tick_spacing)
-    print(f'x_ticks:{x_ticks}')
+    # print(f'x_ticks:{x_ticks}')
 
     fig.update_layout(
         barmode=barmode,
@@ -1842,7 +1842,7 @@ def pie_chart(df, sum_col, index_col, title, save=False,colors=combined_colors,b
               show_legend=False,text_font_size=12,text_font_color='black',texttemplate=None,annotation=True):
     
     original_labels = df[index_col].unique()
-    print(f'original_labels: {original_labels}')
+    # print(f'original_labels: {original_labels}')
 
     if textinfo == 'percent+label':
         percent=False
@@ -1857,9 +1857,9 @@ def pie_chart(df, sum_col, index_col, title, save=False,colors=combined_colors,b
     #     print(f'{textinfo}, {labels}')
     # else:
     labels = padded_labels
-    print(f'{textinfo}, {labels}')
+    # print(f'{textinfo}, {labels}')
 
-    print(f'textinfo: {textinfo}')
+    # print(f'textinfo: {textinfo}')
 
     fig = go.Figure(data=[go.Pie(
         labels=labels,
@@ -1939,9 +1939,9 @@ def bubble_chart(df, groupby, num_col, keep_topn=False, other=False, topn=10, ti
     x_tickprefix, x_ticksuffix = None, None
     y_tickprefix, y_ticksuffix = None, None
 
-    print(f'num_col at start: {num_col}')
+    # print(f'num_col at start: {num_col}')
 
-    print(f'marker: {marker}')
+    # print(f'marker: {marker}')
     
     if num_col == 'market_cap':
         y_tickprefix = '$'

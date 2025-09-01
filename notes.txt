@@ -1,0 +1,9 @@
+uv sync
+
+# For Documentation Server
+
+uv add --group dev mkdocs
+
+.venv\scripts\activate
+
+mkdocs serve

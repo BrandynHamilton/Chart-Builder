@@ -9,7 +9,11 @@ from matplotlib.colors import to_hex
 import colorcet as cc
 import json
 import numpy as np
+from dune_client.client import DuneClient
+from dotenv import load_dotenv
+from pandas.api.types import is_datetime64_any_dtype
 
+load_dotenv()
 
 def dynamic_parameters(df, num_col='market_cap', scale=100, use_log_scale=False):
     max_value = df[num_col].max()
@@ -194,28 +198,28 @@ def clean_values(x, decimals=True, decimal_places=1):
 
     if decimals == True:
         if abs(x) < 1:  # Handle numbers between -1 and 1 first
-            print(f'x < 1:{x}')
+            # print(f'x < 1:{x}')
             return f'{x:.2f}'  # Keep small values with two decimal points
         elif x >= 1e12 or x <= -1e12:
-            print(f'x:{x}T')
+            # print(f'x:{x}T')
             return f'{x / 1e12:.{decimal_places}f}T'  # Trillion
         elif x >= 1e9 or x <= -1e9:
-            print(f'x:{x}B')
+            # print(f'x:{x}B')
             return f'{x / 1e9:.{decimal_places}f}B'  # Billion
         elif x >= 1e6 or x <= -1e6:
-            print(f'x:{x}M')
+            # print(f'x:{x}M')
             return f'{x / 1e6:.{decimal_places}f}M'  # Million
         elif x >= 1e3 or x <= -1e3:
-            print(f'x:{x}k')
+            # print(f'x:{x}k')
             return f'{x / 1e3:.{decimal_places}f}k'  # Thousand
         elif x >= 1e2 or x <= -1e2:
-            print(f'x:{x}')
+            # print(f'x:{x}')
             return f'{x:.{decimal_places}f}'  # Show as is for hundreds
         elif x >= 1 or x <= -1:
-            print(f'x:{x}')
+            # print(f'x:{x}')
             return f'{x:.{decimal_places}f}'  # Show whole numbers for numbers between 1 and 100
         else:
-            print(f'x:{x}')
+            # print(f'x:{x}')
             return f'{x:.{decimal_places}f}'  # Handle smaller numbers
     
     else:
@@ -269,7 +273,7 @@ def to_df(file, delimiter=','):
             # Assume it's a CSV file if it doesn't have an Excel extension
             df = pd.read_csv(df_path, delimiter=delimiter)
         
-        print(df.head(), "\n", df.tail())
+        # print(df.head(), "\n", df.tail())
         return df
     
     except FileNotFoundError:
@@ -292,19 +296,19 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True, drop_mi
     # Append the custom time column if provided
     time_cols.append(time_col.lower() if time_col is not None else None)
     
-    print(f'{time_col}')
-    print(f'{time_cols}')
+    # print(f'{time_col}')
+    # print(f'{time_cols}')
 
     time_freq = 'd'  # Default time frequency
     time_col_found = False  # Flag to check if we have found a time column
 
     for col in df.columns:
-        print(f'col: {col}')
+        # print(f'col: {col}')
 
         if drop_mid_timefreq:
             # Check for specific time columns to set time_freq
             if col.lower() in ['week', 'month', 'quarter']:
-                print(f'time_freq: {col}')
+                # print(f'time_freq: {col}')
                 time_freq = {'week': 'w', 'month': 'm', 'quarter': 'q'}[col.lower()]
                 time_col_found = True  # Indicate we found a time column
 
@@ -315,7 +319,7 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True, drop_mi
                 df[col] = df[col].dt.year  # Keep only the year as integer
                 df = df.set_index(col)  # Set the 'year' column as the index
             elif convert_to_datetime:
-                print(f'convert col to dt: {col}')
+                # print(f'convert col to dt: {col}')
                 if dayfirst:
                     df[col] = pd.to_datetime(df[col], dayfirst=True).dt.tz_localize(None)  # Remove timezone
                 else:
@@ -332,20 +336,20 @@ def to_time(df, time_col=None, dayfirst=False, convert_to_datetime=True, drop_mi
     if not time_col_found:  # If no specific time column was found, default to daily
         print('No specific time column found. Defaulting to daily frequency.')
 
-    print(df.index)
-    print(f'time_freq: {time_freq}')
+    # print(df.index)
+    # print(f'time_freq: {time_freq}')
     return df, time_freq
             
 def clean_dates(df, time_freq):
-    print(f'time_freq:{time_freq}')
+    # print(f'time_freq:{time_freq}')
     # Assumes index is datetime
     today = dt.date.today()
     today = pd.to_datetime(today).tz_localize(None)  # Ensure today is timezone-naive
-    print(f'today: {today}')
+    # print(f'today: {today}')
 
     # Get the latest timestamp in the DataFrame
     latest_date = df.index.max()
-    print(f'latest_date:{latest_date}')
+    # print(f'latest_date:{latest_date}')
 
     if time_freq == 'w':
         # Check if the latest_date is in the current week
@@ -370,7 +374,7 @@ def clean_dates(df, time_freq):
         # Default case for daily cleaning
         df = df[df.index < today]
 
-    print(f'df index: {df.index}')
+    # print(f'df index: {df.index}')
     df.sort_index(ascending=True, inplace=True)
     
     return df
@@ -384,48 +388,105 @@ def latest_values(series):
     # Format the values
     formatted_val = f"{l_val:,.0f}"
     formatted_date = l_date.strftime('%m-%d-%Y')
-    print(f'latest date: {formatted_date}, last value: {formatted_val}')
+    # print(f'latest date: {formatted_date}, last value: {formatted_val}')
     
     return formatted_val, formatted_date
 
-def colors(shuffle=False):
-    # Existing Plotly palettes
-    color_palette = pc.qualitative.Plotly[::-1]
-    distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
+# def colors(shuffle=False):
+#     # Existing Plotly palettes
+#     color_palette = pc.qualitative.Plotly[::-1]
+#     distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
     
-    # Add Matplotlib colors
-    matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
-                        [to_hex(cm.Set1(i)) for i in range(9)]
+#     # Add Matplotlib colors
+#     matplotlib_colors = [to_hex(cm.tab10(i)) for i in range(10)] + \
+#                         [to_hex(cm.Set1(i)) for i in range(9)]
     
-    # Add Colorcet colors
-    colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
+#     # Add Colorcet colors
+#     colorcet_colors = cc.palette['glasbey_dark'] + cc.palette['glasbey_light']
 
-    # Combine all palettes
-    lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
+#     # Combine all palettes
+#     lib_colors = distinct_palette + color_palette + matplotlib_colors + colorcet_colors
 
-    if shuffle:
-        random.shuffle(lib_colors)
+#     if shuffle:
+#         random.shuffle(lib_colors)
 
-    # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
+#     # print(f'Combined colors: {lib_colors} \nCombined colors length: {len(lib_colors)}')
     
-    return lib_colors
+#     return lib_colors
 
-def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to_time=True, dropna=False, fillna=False, ffill=False, resample_freq=None,
-                    delimiter=',', start_date=None, end_date=None, cols=None, dropna_col=False,
-                    keepna=False, drop_duplicates=True, set_time_col=False,drop_mid_timefreq=True,agg_func='sum',
-                    to_clean_dates=True,sort_col=None):
-    print(f'turning to df')
+def data_processing(
+    path=None,
+    file=None,
+    time_col=None,
+    dayfirst=False,
+    turn_to_time=True,
+    dropna=False,
+    fillna=False,
+    ffill=False,
+    resample_freq=None,
+    delimiter=',',
+    start_date=None,
+    end_date=None,
+    cols=None,
+    dropna_col=False,
+    keepna=False,
+    drop_duplicates=True,
+    set_time_col=False,
+    drop_mid_timefreq=True,
+    agg_func='sum',
+    to_clean_dates=True,
+    sort_col=None
+):
+    """
+    Process and clean time-series or tabular data from a CSV/Excel file.
+
+    This function loads a dataset, performs cleaning (duplicate removal, NaN handling, 
+    column selection), converts date/time columns, resamples data, and optionally 
+    filters by a date range.
+
+    Args:
+        path (str, optional): Full path to the file. Defaults to `../data/{file}` if not provided.
+        file (str, optional): Filename if `path` is not provided.
+        time_col (str, optional): Column name to interpret as datetime index.
+        dayfirst (bool, default=False): Whether to interpret dates with day first (e.g., DD/MM/YYYY).
+        turn_to_time (bool, default=True): Whether to convert `time_col` or other time-like columns to datetime index.
+        dropna (bool, default=False): If True, drop all rows containing NaN values.
+        fillna (bool, default=False): If True, fill NaN values with `0`.
+        ffill (bool, default=False): If True, forward-fill NaN values.
+        resample_freq (str, optional): Frequency string (e.g., 'D', 'M', 'Q') for resampling.
+        delimiter (str, default=','): Delimiter for CSV files.
+        start_date (str, optional): Start date filter (inclusive).
+        end_date (str, optional): End date filter (inclusive).
+        cols (list[str] | str, optional): List of columns to keep. Use 'All' for all columns.
+        dropna_col (bool, default=False): If True, drop columns containing NaN values.
+        keepna (bool, default=False): If True, retain NaN values without modification.
+        drop_duplicates (bool, default=True): If True, drop duplicate rows.
+        set_time_col (bool, default=False): If True, explicitly set `time_col` as the index.
+        drop_mid_timefreq (bool, default=True): If True, adjust mid-period time frequencies when inferring.
+        agg_func (str, default='sum'): Aggregation function for resampling ('sum' or 'last').
+        to_clean_dates (bool, default=True): If True, trims incomplete latest periods (e.g., ongoing week/month).
+        sort_col (str, optional): Column to retain and merge back after resampling.
+
+    Returns:
+        df (pd.DataFrame): Processed DataFrame with time index (if `turn_to_time=True`) and applied cleaning, filtering, and resampling.
+
+    Raises:
+        FileNotFoundError: If the input file does not exist.
+        pd.errors.EmptyDataError: If the file is empty.
+        UnicodeDecodeError: If the file encoding is invalid.
+        Exception: For unexpected errors while loading or processing data.
+    """
     if path is None:
         path = f'../data/{file}'
     
     df = to_df(path, delimiter)  # Assuming to_df is defined elsewhere
     
     if drop_duplicates:
-        print(f'Dropping Duplicates')
+        # print(f'Dropping Duplicates')
         df.drop_duplicates(inplace=True)
 
-    print(f'turn to time: {turn_to_time}')
-    print(f'set time col: {set_time_col}')
+    # print(f'turn to time: {turn_to_time}')
+    # print(f'set time col: {set_time_col}')
 
     # If turn_to_time is False, handle accordingly
     if not turn_to_time:
@@ -453,7 +514,7 @@ def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to
 
         return df
 
-    print(f'turning to dt')
+    # print(f'turning to dt')
     
     # Handle NaN values before converting to datetime
     if df.isna().any().any():
@@ -500,29 +561,29 @@ def data_processing(path=None, file=None, time_col=None, dayfirst=False, turn_to
             elif agg_func == 'last':
                 df = df.resample(resample_freq).last()
             df.index = df.index.to_period('Q').strftime('Q%q %y')
-            print(df.index)
+            # print(df.index)
         else:
             if agg_func == 'sum':
                 df = df.resample(resample_freq).sum()
             elif agg_func == 'last':
                 df = df.resample(resample_freq).last()
-            print(df.index)
-        print(f'df after resample: {df}')
+            # print(df.index)
+        # print(f'df after resample: {df}')
         
         if sort_col != None:
-            print(f'sort_col: {sort_col}')
+            # print(f'sort_col: {sort_col}')
             df = df.drop(columns=sort_col).merge(original_df[sort_col], left_index=True, right_index=True, how='inner')
-            print(f'df after merge: {df}')
+            # print(f'df after merge: {df}')
     if to_clean_dates:
-        print(f'cleaning dates')
+        # print(f'cleaning dates')
         df = clean_dates(df,time_freq)  # Assuming clean_dates is defined elsewhere
     
-    print(df.columns)
+    # print(df.columns)
 
     return df
 
 def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, colors=None):
-    print(f"df @ rank_by_col: {df}")
+    # print(f"df @ rank_by_col: {df}")
 
     df.sort_index(inplace=True)
 
@@ -530,7 +591,7 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, c
     if cumulative_sort:
         # breakpoint()
         # Calculate cumulative sum and sort by `num_col`
-        print(f'df: {df}')
+        # print(f'df: {df}')
         cumulative_sorted_list = (
             df.groupby(sort_col)[num_col]
             .sum()
@@ -552,14 +613,14 @@ def rank_by_col(df, sort_col, num_col, descending=True, cumulative_sort=False, c
         sort_col: list(missing_signers),
         num_col: 0
     })
-    print(f"Available columns in df: {df.columns}")
-    print(f"sort_col: {sort_col}")
-    print(f"num_col: {num_col}")
+    # print(f"Available columns in df: {df.columns}")
+    # print(f"sort_col: {sort_col}")
+    # print(f"num_col: {num_col}")
 
     combined_df = pd.concat([last_day_records.reset_index(drop=True), missing_df.reset_index(drop=True)])
     combined_df = combined_df.sort_values(by=num_col, ascending=not descending).drop_duplicates()
 
-    print(f"Combined DataFrame for ranking: {combined_df}")
+    # print(f"Combined DataFrame for ranking: {combined_df}")
 
     # Generate the sorted list for plotting
     latest_sorted_list = combined_df.reset_index()[sort_col].tolist()
@@ -629,7 +690,7 @@ def rank_by_columns(df, cumulative=False, descending=True):
         # Rank by the latest row
         sort_list = df.iloc[-1].sort_values(ascending=not descending)
 
-    print(f"Ranked columns: {sort_list}")
+    # print(f"Ranked columns: {sort_list}")
     return sort_list.index
 
 def top_ten_with_others(df, rank_col, sort_col, top_n=9):
@@ -655,7 +716,7 @@ def top_ten_with_others(df, rank_col, sort_col, top_n=9):
 
         # Combine the top shows and the "Other" group
         combined_df = pd.concat([top_df, other_df], ignore_index=False)
-        print(f'index: {combined_df}')
+        # print(f'index: {combined_df}')
 
         # combined_df.drop_duplicates(inplace=True)
         return combined_df
@@ -668,9 +729,9 @@ def top_ten(df, rank_col,topn=5):
 def ranked_cleaning(df, num_col, sort_col, descending=True,use_sort_list=True): 
     df_copy = df.copy()
     df_copy = df_copy[[sort_col, num_col]]
-    print(f'df in ranked cleaning: {df_copy}')
-    print(f'orig sort order: {df_copy[sort_col].unique()}')
-    print(f'use_sort_list: {use_sort_list}')
+    # print(f'df in ranked cleaning: {df_copy}')
+    # print(f'orig sort order: {df_copy[sort_col].unique()}')
+    # print(f'use_sort_list: {use_sort_list}')
 
     if use_sort_list==True:
 
@@ -718,7 +779,7 @@ def to_percentage(df, sum_col, index_col, percent=True):
         df_copy.set_index('legend_label', inplace=True)
     else:
         df_copy.set_index(index_col, inplace=True)
-        print(f'df_copy: {df_copy}')
+        # print(f'df_copy: {df_copy}')
     
     df_copy.sort_values(by=sum_col, ascending=False, inplace=True)
     df_copy.drop_duplicates(inplace=True)
@@ -726,7 +787,7 @@ def to_percentage(df, sum_col, index_col, percent=True):
     return df_copy, total
 
 def normalize_to_percent(df,num_col=None):
-    print(f'num_col: {num_col}')
+    # print(f'num_col: {num_col}')
 
     if num_col == None:
     
@@ -747,7 +808,7 @@ def normalize_to_percent(df,num_col=None):
 
         df_copy.columns = df_copy.columns.str.replace('_percentage', '', regex=False)
 
-        print(f'percent_cols:{df_copy.columns}')
+        # print(f'percent_cols:{df_copy.columns}')
     else:
         df_copy = df.copy()
         total = df_copy.groupby(df_copy.index)[num_col].sum()
@@ -837,7 +898,7 @@ def top_by_col(df, sort_col, sum_col, num=10, latest=True):
 #     return combined
 
 def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
-    print(F'latest: {latest}')
+    # print(F'latest: {latest}')
     # Step 1: Group by 'make' and calculate the sum of 'mints_per_week'
     if latest==True:
         recent = df.groupby(sort_col).tail(1).sort_values(by=sum_col,ascending=False).head(num)[sort_col].values.tolist()
@@ -867,7 +928,7 @@ def top_other_by_col(df, sort_col, sum_col, num=10, latest=True):
 
         combined = pd.concat([filtered_df,others_values]).sort_index().drop_duplicates()
 
-    print(f'combined: {combined}')
+    # print(f'combined: {combined}')
 
     return combined
 
@@ -893,9 +954,9 @@ def top_other_ts_by_col(df,num_col, sort_col, topn=9):
 
 def top_other_ts_by_columns(df, topn=9, num_other = False):
     list = rank_by_columns(df)
-    print(f'top {topn} cols: {list[0:topn]}')
+    # print(f'top {topn} cols: {list[0:topn]}')
     other_cols = [col for col in df.columns if col not in(list[0:topn])]
-    print(f'other cols: {other_cols}')
+    # print(f'other cols: {other_cols}')
     top = df[list[0:topn]]
     other_df = df[other_cols]
     other_df = other_df.sum(axis=1).to_frame('other')
@@ -908,14 +969,14 @@ def top_other_ts_by_columns(df, topn=9, num_other = False):
 def top_ts_by_col(df,num_col, sort_col, topn=9):
     list = rank_by_col(df=df,sort_col=sort_col,num_col=num_col)
     list = list[0]
-    print(f'list: {list}')
+    # print(f'list: {list}')
     top_df = df[df[sort_col].isin(list[0:topn])]
 
     return top_df
 
 def top_ts_only_by_columns(df, topn=9):
     list = rank_by_columns(df)
-    print(f'top {topn} cols: {list[0:topn]}')
+    # print(f'top {topn} cols: {list[0:topn]}')
     top = [col for col in df.columns if col in(list[0:topn])]
     df_new = df[top]
 
@@ -928,24 +989,22 @@ def clean_string(value, capwords, clean_words):
     # Check for capitalization based on capwords
     for word in cleaned_value.split():
         if word.upper() in capwords:
-            print(f"'{value}' matches capword. Keeping as uppercase: {word.upper()}")
+            # print(f"'{value}' matches capword. Keeping as uppercase: {word.upper()}")
             cleaned_value = cleaned_value.replace(word, word.upper())
-        else:
-            print(f"'{value}' does not match capword. Converting to title case: {word.title()}")
 
     # Replace words based on the clean_words mapping
     for old_word, new_word in clean_words.items():
         cleaned_value = cleaned_value.replace(old_word, new_word)
 
-    print(f"Cleaned string: '{cleaned_value}'")
+    # print(f"Cleaned string: '{cleaned_value}'")
     return cleaned_value
 
 def cleaning(df, cols_to_plot, bar_col, line_col, groupby, num_col, y1_list=None, y2_list=None, capwords=None, clean_words=None):
     # Ensure capwords is a list of uppercase words
     capwords = [word.upper() for word in (capwords or [])]
-    print(f'capwords: {capwords}')
+    # print(f'capwords: {capwords}')
 
-    print(f'y1_list: {y1_list} \ny2_list: {y2_list}')
+    # print(f'y1_list: {y1_list} \ny2_list: {y2_list}')
     
     # Prepare the replacement mapping if clean_words is provided
     clean_words = clean_words or {}
@@ -987,26 +1046,26 @@ def cleaning(df, cols_to_plot, bar_col, line_col, groupby, num_col, y1_list=None
     # Clean the groupby column (single string)
     if groupby:
         groupby_cleaned = clean_string(groupby, capwords, clean_words)
-        print(f"Cleaned groupby: {groupby_cleaned}")
+        # print(f"Cleaned groupby: {groupby_cleaned}")
     else:
         groupby_cleaned = groupby
 
     # Clean the num_col column (single string)
     if num_col:
         num_col_cleaned = clean_string(num_col, capwords, clean_words)
-        print(f"Cleaned num_col: {num_col_cleaned}")
+        # print(f"Cleaned num_col: {num_col_cleaned}")
     else:
         num_col_cleaned = num_col
 
     # Print cleaned columns for verification
-    print("Cleaned DataFrame columns:", df.columns.tolist())
-    print("Cleaned cols_to_plot:", cols_to_plot)
-    print("Cleaned bar_col:", bar_col)
-    print("Cleaned line_col:", line_col)
-    print("Cleaned y1_list:", y1_list)
-    print("Cleaned y2_list:", y2_list)
-    print("Cleaned groupby:", groupby_cleaned)
-    print("Cleaned num_col:", num_col_cleaned)
+    # print("Cleaned DataFrame columns:", df.columns.tolist())
+    # print("Cleaned cols_to_plot:", cols_to_plot)
+    # print("Cleaned bar_col:", bar_col)
+    # print("Cleaned line_col:", line_col)
+    # print("Cleaned y1_list:", y1_list)
+    # print("Cleaned y2_list:", y2_list)
+    # print("Cleaned groupby:", groupby_cleaned)
+    # print("Cleaned num_col:", num_col_cleaned)
 
     return df, cols_to_plot, bar_col, line_col, y1_list, y2_list, groupby_cleaned, num_col_cleaned
 
@@ -1101,12 +1160,200 @@ def get_files(submission):
 
     return files
 
+def top_ts(
+    df,
+    topn=9,
+    num_col=None,
+    sort_col=None,
+    other=False,
+    num_other=False,
+    other_col=None
+):
+    """
+    Consolidated time series top-N function.
+
+    Args:
+        df: DataFrame (time series, index = datetime)
+        topn: number of top items
+        num_col: numeric column (for long-form)
+        sort_col: column to group/sort by (for long-form)
+        other: whether to lump remaining into "other"
+        num_other: whether to label "other" with count of dropped cols
+        other_col: column to use for "other" (if the data already has an "other" category)
+
+    Returns:
+        DataFrame with top N (and optional "other")
+    """
+
+    # ---- Wide format (columns are entities) ----
+    if sort_col is None and num_col is None:
+        ranked = rank_by_columns(df)
+        top_cols = ranked[0:topn]
+
+        top_df = df[top_cols]
+
+        if not other:
+            return top_df
+
+        other_cols = [c for c in df.columns if c not in top_cols]
+        other_df = df[other_cols].sum(axis=1).to_frame("other")
+
+        if num_other:
+            other_df.rename(columns={"other": f"others ({len(other_cols)})"}, inplace=True)
+
+        return pd.concat([top_df, other_df], axis=1)
+
+    # ---- Long format (sort_col, num_col) ----
+    elif sort_col is not None and num_col is not None:
+        combined = filter_by_topx(
+            df=df,
+            top_n=topn,
+            num_col=num_col,
+            groupby_col=sort_col,
+            other_col=other_col
+        )
+
+        return combined
+
+    else:
+        raise ValueError("Either both sort_col & num_col must be provided (long form) or neither (wide form).")
+
+def top_no_ts(
+    df: pd.DataFrame,
+    sort_col: str = None,
+    sum_col: str = None,
+    num: int = 10,
+    latest: bool = True,
+    include_other: bool = False,
+) -> pd.DataFrame:
+    """
+    Get top-N rows grouped by a column, with option to combine non-top values into 'other'.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Input dataframe
+    sort_col : str
+        Column to group and rank by
+    sum_col : str
+        Column with numeric values to aggregate
+    num : int
+        Number of top groups to keep
+    latest : bool
+        If True, select top-N by latest values, else by cumulative sum
+    include_other : bool
+        If True, aggregate all non-top groups into a single 'other' group
+
+    Returns
+    -------
+    DataFrame
+    """
+    if not sort_col or not sum_col:
+
+        list = rank_by_columns(df, cumulative = not latest)[:num]
+
+        top = df[list]
+        if not include_other:
+            return top
+        
+        other = df[df.columns.difference(list)]
+        other_value = other.sum(axis=1)
+
+        other_df = pd.DataFrame({
+            "other": other_value
+        })
+
+        return pd.concat([top, other_df], axis=1)
+
+    if latest:
+        # Get the most recent row per group, then sort by sum_col
+        recent = (
+            df.groupby(sort_col).tail(1)
+            .sort_values(by=sum_col, ascending=False)
+            .head(num)[sort_col]
+            .tolist()
+        )
+        top_df = df[df[sort_col].isin(recent)]
+        others_mask = ~df[sort_col].isin(recent)
+
+    else:
+        # Get top-N by cumulative sum
+        top = (
+            df.groupby(sort_col)[sum_col]
+            .sum()
+            .nlargest(num)
+            .index
+        )
+        top_df = df[df[sort_col].isin(top)]
+        others_mask = ~df[sort_col].isin(top)
+
+    if include_other:
+        # Aggregate others into single "other" category
+        others = (
+            df[others_mask][[sum_col]]
+            .groupby(df[others_mask].index)
+            .sum()
+        )
+        others[sort_col] = "other"
+
+        result = pd.concat([top_df, others]).sort_index()
+    else:
+        result = top_df
+
+    return result.drop_duplicates()
+
+def keep_top_n(df, groupby=None, num_col=None, topn=None, other=True, cumulative_sort=True, other_col=None):
+    """
+    Filter a DataFrame to keep only the top N rows.  Supports both long and wide DFs
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        groupby (str): The column to group by.
+        num_col (str): The column with numeric values to aggregate.
+        topn (int): The number of top groups to keep.
+        other (bool): If True, aggregate all non-top groups into a single 'other' group.
+        cumulative_sort (bool): If True, sort by cumulative sum, else by latest value.
+        other_col (str, optional): If the DF already has an other column, this handles that.
+
+    Returns
+        df (pd.DataFrame): The filtered DataFrame with top N groups (and optional 'other').
+    """
+    df_copy = df.copy()
+
+    # Check if the index is a datetime index
+    is_dt_index = is_datetime64_any_dtype(df.index)
+    # print(f'is_dt_index: {is_dt_index}')
+
+    # Handle non-time series data
+    if is_dt_index == False:
+        df_out = top_no_ts(
+            df=df_copy, 
+            sort_col=groupby, 
+            sum_col=num_col, 
+            num=topn,
+            latest=not cumulative_sort, 
+            include_other=other
+        )
+
+    else:
+
+        df_out = top_ts(
+            df=df_copy,
+            topn=topn,
+            num_col=num_col,
+            sort_col=groupby,
+            other=other,
+            other_col=other_col
+        )
+    
+    return df_out
+
 def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x=0.05,y=1.18),
          save=True,file_type='svg',clean_columns=False, capwords=None, keep_top_n = False, other=False, topn=None,
-         show=True,show_index_and_cols=True,clean_values=False,clean_words=None,dt_index=True,add_the_date=True,groupby=False,groupbyHow='sum',
+         show=True,clean_values=False,clean_words=None,dt_index=True,add_the_date=True,groupby=False,groupbyHow='sum',
          date=None,dashed_line=False,annotation_text=None,axis='y1'):
     
-    print(f'save:{save}')
+    # print(f'save:{save}')
     
     if clean_values == True:
         fig.clean_values()
@@ -1125,8 +1372,8 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
     
     fig.create_fig()
 
-    if show_index_and_cols == True:
-        fig.show_index_and_cols()
+    # if show_index_and_cols == True:
+    #     fig.show_index_and_cols()
         
     fig.add_title(title=title,subtitle=subtitle,x=title_xy['x'],y=title_xy['y'])
 
@@ -1143,15 +1390,127 @@ def main(fig, title=None,subtitle=None,title_xy=dict(x=0.1,y=0.9),date_xy=dict(x
         fig.save_fig(filetype=file_type)
 
 def open_json(file_name):
+    """
+    Opens a .json file
+
+    Args:
+        file_name (str): The path name of the .json file to open.
+
+    """
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
             data = json.load(file)
         print("JSON data loaded successfully!")
-        print(data)  # Print the JSON content (optional)
+        # print(data)  # Print the JSON content (optional)
     except FileNotFoundError:
         print(f"File {file_name} not found.")
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")
     return data
 
+def colors(shuffle=False):
+    """
+    Generate a list of colors for plotting.
+    """
+    on_colors = ['#00CC96', '#67D8FE','#FF7EBE', '#FFBC36', '#E6FF59']
+    
+    color_palette = pc.qualitative.Plotly[::-1]
+    distinct_palette = pc.qualitative.Dark24 + pc.qualitative.Set3
+    lib_colors = distinct_palette+color_palette
 
+    if shuffle==True:
+        random.shuffle(lib_colors)
+
+    combined_colors = on_colors + lib_colors
+    # print(f'Combined colors: {combined_colors} \nCombined colors length: {len(combined_colors)}')
+    
+    return combined_colors
+
+def get_dune_query(query_id, api_key = None):
+    """
+    Fetches a Dune Analytics query by its ID.
+    
+    Args:
+        query_id (int): The ID of the Dune Analytics query.
+        api_key (str, optional): The API key for Dune Analytics. If not provided, it will be loaded from the environment variable DUNE_API_KEY.
+
+    Returns:
+        df (pd.DataFrame): The JSON response from the Dune API containing the query results in a df.
+    """
+    if not api_key:
+        api_key = os.getenv('DUNE_API_KEY')
+        if not api_key:
+            raise ValueError("DUNE_API_KEY environment variable not set and no API key provided.")
+        
+    dune = DuneClient(api_key)
+
+    try:
+        response = dune.get_latest_result(query_id)
+        resp_row = response.get_rows()
+        resp_df = pd.DataFrame(resp_row)
+        return resp_df
+    except Exception as e:
+        print(f"Error fetching query {query_id}: {e}")
+        return None
+
+def filter_by_topx(df, groupby_col, num_col, top_n=4, other_col=None):
+    """
+    Filter the DataFrame to keep only the top N rows for 
+    each group in the specified column.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to filter.
+        groupby_col (str): The column to group by.
+        num_col (str): The numeric column to filter on.
+        top_n (int, optional): The number of top rows to keep for each group. Defaults to 4.
+        other_col (str, optional): The column to use for the "Other" category. If not provided, it will be inferred.
+
+    Returns:
+        pd.DataFrame: The filtered DataFrame.
+    """
+
+    if not other_col:
+    
+        df = df[[groupby_col,num_col]].copy()
+        top = df.groupby(groupby_col).sum().sort_values(num_col, ascending=False).head(top_n).index
+        top_df = df[df[groupby_col].isin(top)]
+        other_df = df[~df[groupby_col].isin(top)]
+        other_df = other_df.groupby(other_df.index)[[num_col]].sum()
+        other_df[groupby_col] = 'Other'
+
+        combined_df = pd.concat([top_df, other_df]).sort_index()
+    else:
+        
+        df = df[[groupby_col,num_col]].copy()
+        top = df[df[groupby_col]!= other_col].groupby(groupby_col).sum().sort_values(num_col, ascending=False).head(top_n).index
+        top_df = df[df[groupby_col].isin(top)]
+        other_df = df[~df[groupby_col].isin(top)]
+        other_df = other_df.groupby(other_df.index)[[num_col]].sum()
+        other_df[groupby_col] = 'Other'
+
+        combined_df = pd.concat([top_df, other_df]).sort_index()
+
+    return combined_df
+
+def groupby_dt_and_col(df, freq, groupby_col, num_col, dt_col):
+    """
+    Group the DataFrame by a datetime column and a specified category column,
+    and aggregate the values in the numeric column.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to group.
+        freq (str): The frequency to group by (e.g., 'M' for month).
+        groupby_col (str): The column to group by.
+        num_col (str): The numeric column to aggregate.
+        dt_col (str): The datetime column to use as the index.
+
+    Returns:
+        df (pd.DataFrame): The grouped DataFrame.
+    """
+    df_copy = df.copy()
+    df_final = df_copy.groupby([
+        pd.Grouper(freq=freq),  # groups by month using the index (must be datetime)
+        groupby_col             # groups by category
+    ])[[num_col]].sum().reset_index().set_index(dt_col).sort_index()
+
+    return df_final
